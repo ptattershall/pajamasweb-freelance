@@ -8,9 +8,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_SECRET_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Initialize Supabase client lazily to avoid build-time errors
+let supabase: ReturnType<typeof createClient> | null = null
+
+function getSupabaseClient() {
+  if (!supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_SECRET_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase environment variables')
+    }
+
+    supabase = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabase
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -65,7 +78,7 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Processing checkout.session.completed:', session.id)
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('payments')
     .insert({
       client_id: session.metadata?.userId,
@@ -93,7 +106,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   console.log('Processing customer.subscription.created:', subscription.id)
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseClient()
     .from('payments')
     .insert({
       client_id: subscription.metadata?.userId,
@@ -121,7 +134,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('Processing customer.subscription.updated:', subscription.id)
 
-  const { error } = await supabase
+  const { error } = await getSupabaseClient()
     .from('payments')
     .update({
       status: subscription.status,
@@ -141,7 +154,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('Processing customer.subscription.deleted:', subscription.id)
 
-  const { error } = await supabase
+  const { error } = await getSupabaseClient()
     .from('payments')
     .update({ status: 'cancelled' })
     .eq('intent_id', subscription.id)
@@ -155,7 +168,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_succeeded:', invoice.id)
 
-  const { error } = await supabase
+  const { error } = await getSupabaseClient()
     .from('payments')
     .update({ status: 'paid' })
     .eq('intent_id', invoice.id)
@@ -169,7 +182,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 async function handleInvoiceFailed(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_failed:', invoice.id)
 
-  const { error } = await supabase
+  const { error } = await getSupabaseClient()
     .from('payments')
     .update({ status: 'failed' })
     .eq('intent_id', invoice.id)
