@@ -92,7 +92,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         session_id: session.id,
         customer_email: session.customer_email,
       },
-    })
+    } as any)
     .select()
 
   if (error) {
@@ -120,7 +120,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         subscription_id: subscription.id,
         interval: subscription.items.data[0]?.price?.recurring?.interval,
       },
-    })
+    } as any)
     .select()
 
   if (error) {
@@ -134,8 +134,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('Processing customer.subscription.updated:', subscription.id)
 
-  const { error } = await getSupabaseClient()
-    .from('payments')
+  const { error } = await (getSupabaseClient()
+    .from('payments') as any)
     .update({
       status: subscription.status,
       metadata: {
@@ -154,8 +154,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('Processing customer.subscription.deleted:', subscription.id)
 
-  const { error } = await getSupabaseClient()
-    .from('payments')
+  const { error } = await (getSupabaseClient()
+    .from('payments') as any)
     .update({ status: 'cancelled' })
     .eq('intent_id', subscription.id)
 
@@ -168,8 +168,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_succeeded:', invoice.id)
 
-  const { error } = await getSupabaseClient()
-    .from('payments')
+  const { error } = await (getSupabaseClient()
+    .from('payments') as any)
     .update({ status: 'paid' })
     .eq('intent_id', invoice.id)
 
@@ -182,8 +182,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 async function handleInvoiceFailed(invoice: Stripe.Invoice) {
   console.log('Processing invoice.payment_failed:', invoice.id)
 
-  const { error } = await getSupabaseClient()
-    .from('payments')
+  const { error } = await (getSupabaseClient()
+    .from('payments') as any)
     .update({ status: 'failed' })
     .eq('intent_id', invoice.id)
 
