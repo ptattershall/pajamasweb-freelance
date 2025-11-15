@@ -1,6 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PajamasWeb - AI-Powered Service Platform
 
-## Getting Started
+A [Next.js](https://nextjs.org) project for managing services, bookings, AI chat, and client portals.
+
+## 📚 Documentation
+
+### Quick Start
+
+- **[START_HERE.md](./START_HERE.md)** - Begin here for Cal.com booking setup (45 minutes)
+
+### Feature Documentation
+
+- **[docs/calcom/](./docs/calcom/)** - Cal.com booking system implementation
+- **[docs/ai-chat/](./docs/ai-chat/)** - AI Chat feature with RAG and safety features
+- **[docs/features/](./docs/features/)** - Detailed feature guides
+- **[docs/database/](./docs/database/)** - Database schema and migrations
+
+### Project Information
+
+- **[docs/PROJECT_STRUCTURE.md](./docs/PROJECT_STRUCTURE.md)** - Codebase organization
+- **[docs/DEVELOPMENT_ROADMAP.md](./docs/DEVELOPMENT_ROADMAP.md)** - Development timeline
+- **[docs/Pajamasweb_PRD.md](./docs/Pajamasweb_PRD.md)** - Product requirements
+- **[docs/archive/](./docs/archive/)** - Historical phase summaries
+
+## 🚀 Getting Started
 
 First, run the development server:
 

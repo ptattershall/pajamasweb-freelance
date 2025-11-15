@@ -1,0 +1,63 @@
+[
+  {
+    "id": "faq-001",
+    "question": "How much does a website cost?",
+    "answer": "Website costs vary based on complexity and features. Our Starter tier begins at $2,500 for simple brochure sites. Pro tier websites with e-commerce and integrations range from $5,000-$15,000. Enterprise solutions are custom quoted. We provide detailed estimates after understanding your specific requirements.",
+    "category": "pricing"
+  },
+  {
+    "id": "faq-002",
+    "question": "What is your typical project timeline?",
+    "answer": "Most projects take 4-12 weeks depending on scope. Simple websites: 4-6 weeks. Medium complexity: 8-10 weeks. Complex projects with custom features: 12+ weeks. We offer rush timelines with a 30% premium for urgent projects.",
+    "category": "timeline"
+  },
+  {
+    "id": "faq-003",
+    "question": "Do you provide ongoing support and maintenance?",
+    "answer": "Yes! We offer maintenance retainers starting at $500/month including security updates, backups, and minor fixes. Support packages include 24-hour response times for critical issues. We also provide training for your team to manage content.",
+    "category": "support"
+  },
+  {
+    "id": "faq-004",
+    "question": "What technologies do you use?",
+    "answer": "We specialize in modern web technologies: Next.js for frontend, Node.js for backend, PostgreSQL for databases, and Supabase for backend services. We also integrate with Stripe for payments, Cal.com for scheduling, and other popular tools.",
+    "category": "technology"
+  },
+  {
+    "id": "faq-005",
+    "question": "Can you integrate with my existing tools?",
+    "answer": "Absolutely! We integrate with popular platforms including Stripe, PayPal, Shopify, HubSpot, Slack, Zapier, and many others. We can also build custom integrations with your specific tools and APIs.",
+    "category": "integrations"
+  },
+  {
+    "id": "faq-006",
+    "question": "Do you offer e-commerce solutions?",
+    "answer": "Yes, we build custom e-commerce platforms with Stripe or PayPal integration, inventory management, order tracking, and customer dashboards. We can also integrate with existing platforms like Shopify.",
+    "category": "ecommerce"
+  },
+  {
+    "id": "faq-007",
+    "question": "What about SEO and performance?",
+    "answer": "SEO is built into every project. We implement best practices for Core Web Vitals, mobile optimization, structured data, and fast loading times. Our sites typically score 90+ on Google PageSpeed Insights.",
+    "category": "performance"
+  },
+  {
+    "id": "faq-008",
+    "question": "How do you handle security?",
+    "answer": "Security is paramount. We implement SSL/TLS encryption, regular security audits, automated backups, DDoS protection, and follow OWASP guidelines. All data is encrypted at rest and in transit.",
+    "category": "security"
+  },
+  {
+    "id": "faq-009",
+    "question": "Can you help with content strategy?",
+    "answer": "Yes, we offer content strategy consulting to help you plan your messaging, blog strategy, and customer journey. We can also help with copywriting and content creation.",
+    "category": "content"
+  },
+  {
+    "id": "faq-010",
+    "question": "What's your process for starting a project?",
+    "answer": "We start with a discovery call to understand your goals, target audience, and requirements. Then we provide a detailed proposal with timeline and pricing. Once approved, we begin with design mockups, then development, testing, and deployment.",
+    "category": "process"
+  }
+]
+
