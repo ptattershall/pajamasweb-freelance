@@ -1,10 +1,10 @@
 /**
- * Redirect to new auth signup page
+ * Redirect to sales funnel
  */
 
 import { redirect } from 'next/navigation'
 
 export default function SignUpPage() {
-  redirect('/auth/signup')
+  redirect('/sales')
 }
 

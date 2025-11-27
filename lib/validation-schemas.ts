@@ -298,6 +298,49 @@ export const bookingHistorySchema = z.object({
 })
 
 // ============================================================================
+// DATABASE SCHEMAS - SALES INQUIRIES
+// ============================================================================
+
+export const salesInquirySchema = z.object({
+  id: z.string().uuid(),
+  full_name: z.string(),
+  email: z.string().email(),
+  company: z.string().nullable(),
+  phone: z.string().nullable(),
+  services: z.array(z.string()),
+  project_description: z.string().nullable(),
+  timeline: z.string().nullable(),
+  budget_range: z.string().nullable(),
+  additional_notes: z.string().nullable(),
+  meeting_booked: z.boolean(),
+  booking_id: z.string().uuid().nullable(),
+  status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'CLOSED_WON', 'CLOSED_LOST']),
+  source: z.string(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+  admin_notes: z.string().nullable(),
+})
+
+export const createSalesInquirySchema = z.object({
+  full_name: z.string().min(1, 'Full name is required').max(255),
+  email: z.string().email('Invalid email address'),
+  company: z.string().max(255).optional(),
+  phone: z.string().max(50).optional(),
+  services: z.array(z.string()).min(1, 'Please select at least one service'),
+  project_description: z.string().min(1, 'Project description is required').max(2000),
+  timeline: z.string().optional(),
+  budget_range: z.string().optional(),
+  additional_notes: z.string().max(1000).optional(),
+})
+
+export const updateSalesInquirySchema = z.object({
+  status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'CLOSED_WON', 'CLOSED_LOST']).optional(),
+  admin_notes: z.string().optional(),
+  meeting_booked: z.boolean().optional(),
+  booking_id: z.string().uuid().optional(),
+})
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -354,4 +397,9 @@ export type CreateMilestoneUpdateRecordInput = z.infer<typeof createMilestoneUpd
 
 // Booking history types
 export type BookingHistory = z.infer<typeof bookingHistorySchema>
+
+// Sales inquiry types
+export type SalesInquiry = z.infer<typeof salesInquirySchema>
+export type CreateSalesInquiryInput = z.infer<typeof createSalesInquirySchema>
+export type UpdateSalesInquiryInput = z.infer<typeof updateSalesInquirySchema>
 

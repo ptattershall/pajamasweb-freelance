@@ -173,9 +173,9 @@ function SignInContent() {
               </Button>
             </Link>
             <p className="text-center text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-primary hover:underline font-medium">
-                Sign Up
+              Interested in our services?{' '}
+              <Link href="/sales" className="text-primary hover:underline font-medium">
+                Book a Consultation
               </Link>
             </p>
           </div>

@@ -173,12 +173,12 @@ export function HomePageClient() {
             functional digital experiences. Let&apos;s build something amazing together.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <a
-              href="#contact"
+            <Link
+              href="/sales"
               className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 font-semibold text-black transition-colors hover:bg-zinc-200"
             >
-              Get in Touch
-            </a>
+              Book Consultation
+            </Link>
             <a
               href="#offerings"
               className="inline-flex items-center justify-center rounded-lg border border-white px-8 py-3 font-semibold text-white transition-colors hover:bg-white/10"
@@ -230,19 +230,17 @@ export function HomePageClient() {
             Let&apos;s discuss your project and see how I can help bring your vision to life.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <a
-              href="mailto:info@pajamasweb.com"
+            <Link
+              href="/sales"
               className="inline-flex items-center justify-center rounded-lg bg-black px-8 py-3 font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             >
-              Send Me an Email
-            </a>
+              Book a Consultation
+            </Link>
             <a
-              href="https://cal.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:info@pajamasweb.com"
               className="inline-flex items-center justify-center rounded-lg border border-black px-8 py-3 font-semibold text-black transition-colors hover:bg-black hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black"
             >
-              Book a Call
+              Send Me an Email
             </a>
           </div>
         </div>
@@ -313,10 +311,10 @@ export function HomePageClient() {
               <ul className="space-y-2">
                 <li>
                   <Link
-                    href="/book"
+                    href="/sales"
                     className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                   >
-                    Book a Call
+                    Get Started
                   </Link>
                 </li>
                 <li>

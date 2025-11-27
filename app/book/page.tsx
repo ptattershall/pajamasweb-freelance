@@ -99,23 +99,23 @@ export default function BookingPage() {
 
           <div className="bg-blue-500/20 border border-blue-500 rounded-lg p-8 text-center">
             <h2 className="text-2xl font-semibold text-white mb-4">
-              Account Required
+              Let&apos;s Get Started
             </h2>
             <p className="text-slate-200 mb-6">
-              You need to have an account to book a meeting. Please sign in or create an account to continue.
+              New client? Start with our sales consultation to discuss your project needs. Existing client? Sign in to book directly.
             </p>
             <div className="flex gap-4 justify-center">
               <Link
-                href="/auth/signin"
+                href="/sales"
                 className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
               >
-                Sign In
+                Book Consultation
               </Link>
               <Link
-                href="/auth/signup"
+                href="/auth/signin"
                 className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold text-slate-900 transition-colors hover:bg-slate-100"
               >
-                Create Account
+                Sign In
               </Link>
             </div>
           </div>
