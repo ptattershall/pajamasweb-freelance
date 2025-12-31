@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Script from 'next/script'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,6 +55,7 @@ export default function SalesFunnelPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [inquiryId, setInquiryId] = useState<string | null>(null)
+  const [calLoaded, setCalLoaded] = useState(false)
 
   const [formData, setFormData] = useState<FormData>({
     services: [],
@@ -67,17 +69,41 @@ export default function SalesFunnelPage() {
     phone: '',
   })
 
+  // Initialize Cal.com embed when step 3 is reached
+  useEffect(() => {
+    if (step === 3 && success && calLoaded) {
+      // Initialize Cal.com inline embed
+      (window as any).Cal?.("inline", {
+        elementOrSelector: "#sales-booking-embed",
+        calLink: process.env.NEXT_PUBLIC_CALCOM_LINK || "your-username/consultation",
+        config: {
+          theme: "light",
+          layout: "month_view"
+        }
+      })
+
+      // Set up event listeners for booking success
+      (window as any).Cal?.("on", {
+        action: "bookingSuccessful",
+        callback: (e: any) => {
+          console.log('Sales consultation booked:', e.detail)
+          // TODO: Link booking to inquiry using inquiryId
+        }
+      })
+    }
+  }, [step, success, calLoaded, inquiryId])
+
   const toggleService = (serviceId: string) => {
-    setFormData(prev => ({
+    setFormData((prev: FormData) => ({
       ...prev,
       services: prev.services.includes(serviceId)
-        ? prev.services.filter(s => s !== serviceId)
+        ? prev.services.filter((s: string) => s !== serviceId)
         : [...prev.services, serviceId]
     }))
   }
 
   const updateField = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev: FormData) => ({ ...prev, [field]: value }))
   }
 
   const validateStep1 = () => {
@@ -372,32 +398,40 @@ export default function SalesFunnelPage() {
                     Now let&apos;s schedule a time to discuss your project in detail.
                   </p>
 
-                  {/* Cal.com embed will be loaded here */}
-                  <div id="sales-booking-embed" className="w-full" style={{ minHeight: '500px' }}>
-                    {/* Cal.com booking widget */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-lg p-8 border border-zinc-200 dark:border-zinc-800">
-                      <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-                        Loading calendar...
-                      </p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-500">
-                        If the calendar doesn&apos;t load, you can also{' '}
-                        <a
-                          href="mailto:info@pajamasweb.com"
-                          className="text-black dark:text-white underline hover:no-underline"
-                        >
-                          email us directly
-                        </a>
-                        {' '}or{' '}
-                        <a
-                          href="/book"
-                          className="text-black dark:text-white underline hover:no-underline"
-                        >
-                          visit our booking page
-                        </a>
-                        .
-                      </p>
-                    </div>
+                  {/* Cal.com embed */}
+                  <div
+                    id="sales-booking-embed"
+                    className="w-full bg-white dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800"
+                    style={{ minHeight: '600px' }}
+                  >
+                    {/* Cal.com will render here */}
+                    {!calLoaded && (
+                      <div className="flex items-center justify-center h-96">
+                        <div className="text-center">
+                          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-zinc-300 border-t-black dark:border-zinc-700 dark:border-t-white"></div>
+                          <p className="text-zinc-600 dark:text-zinc-400">Loading calendar...</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-4 text-center">
+                    Having trouble? You can also{' '}
+                    <a
+                      href="mailto:info@pajamasweb.com"
+                      className="text-black dark:text-white underline hover:no-underline"
+                    >
+                      email us
+                    </a>
+                    {' '}or{' '}
+                    <a
+                      href="/book"
+                      className="text-black dark:text-white underline hover:no-underline"
+                    >
+                      visit our booking page
+                    </a>
+                    .
+                  </p>
 
                   <div className="mt-6">
                     <Button
@@ -440,6 +474,15 @@ export default function SalesFunnelPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Cal.com Script */}
+      <Script
+        src="https://cal.com/embed/embed.js"
+        strategy="afterInteractive"
+        onLoad={() => {
+          setCalLoaded(true)
+        }}
+      />
     </div>
   )
 }
