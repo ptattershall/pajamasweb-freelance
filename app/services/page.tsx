@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/services`,
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og/service?title=Our Services&description=Web development and design services`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
         width: 1200,
         height: 630,
         alt: 'PajamasWeb Services',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Services | PajamasWeb',
     description: 'Explore our web development and design services',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og/service?title=Our Services&description=Web development and design services`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
   },
 }
 

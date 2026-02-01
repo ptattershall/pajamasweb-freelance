@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/case-studies`,
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og?title=Case Studies&description=Explore our portfolio`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
         width: 1200,
         height: 630,
         alt: 'PJais.ai Case Studies',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Case Studies | PJais.ai',
     description: 'Explore our portfolio of successful projects and client transformations.',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og?title=Case Studies&description=Explore our portfolio`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
   },
 }
 

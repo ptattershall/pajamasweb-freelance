@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/og`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`,
         width: 1200,
         height: 630,
         alt: "PajamasWeb - Freelance Web Development & Design",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PajamasWeb - Freelance Web Development & Design",
     description: "Professional freelance web development, UI/UX design, and consulting services.",
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/og`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`],
   },
   robots: {
     index: true,

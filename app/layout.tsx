@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/og`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`,
         width: 1200,
         height: 630,
         alt: "PJais.ai",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PJais.ai - AI-Powered Web Design & Development",
     description: "Professional web design, development, and AI-powered services for your business",
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/og`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`],
     creator: "@pjaisai",
   },
   robots: {

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/blog`,
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og?title=Blog&description=Read our latest articles`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
         width: 1200,
         height: 630,
         alt: 'PJais.ai Blog',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Blog | PJais.ai',
     description: 'Read our latest articles about web design, development, and digital strategy.',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og?title=Blog&description=Read our latest articles`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
   },
 }
 

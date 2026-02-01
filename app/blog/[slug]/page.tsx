@@ -32,7 +32,7 @@ export async function generateMetadata(
     return {}
   }
 
-  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og/blog?slug=${params.slug}&title=${encodeURIComponent(post.title)}&description=${encodeURIComponent(post.summary)}`
+  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`
 
   return {
     title: `${post.title} | PJais.ai`,
