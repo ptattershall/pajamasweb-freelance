@@ -502,14 +502,14 @@ export async function getServices(activeOnly: boolean = true): Promise<Service[]
     const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching services:', error)
+      console.warn('Warning: Error fetching services:', error)
       // Return empty array instead of throwing to allow graceful degradation during build
       return []
     }
 
     return (data as Service[]) || []
   } catch (error) {
-    console.error('Error fetching services:', error)
+    console.warn('Warning: Error fetching services:', error)
     // Return empty array on network errors during build time
     return []
   }
@@ -524,13 +524,13 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
       .single()
 
     if (error) {
-      console.error('Error fetching service:', error)
+      console.warn('Warning: Error fetching service:', error)
       return null
     }
 
     return data as Service | null
   } catch (error) {
-    console.error('Error fetching service:', error)
+    console.warn('Warning: Error fetching service:', error)
     return null
   }
 }
