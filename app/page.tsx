@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     title: "PajamasWeb - Freelance Web Development & Design",
     description: "Professional freelance web development, UI/UX design, and consulting services. Let's build something amazing together.",
     type: "website",
-    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    url: "https://www.pajamasweb.com",
     siteName: "PajamasWeb",
     locale: "en_US",
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`,
+        url: "https://www.pajamasweb.com/thumbnail.png",
         width: 1200,
         height: 630,
         alt: "PajamasWeb - Freelance Web Development & Design",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PajamasWeb - Freelance Web Development & Design",
     description: "Professional freelance web development, UI/UX design, and consulting services.",
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/thumbnail.png`],
+    images: ["https://www.pajamasweb.com/thumbnail.png"],
   },
   robots: {
     index: true,
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    canonical: "https://www.pajamasweb.com",
   },
 };
 

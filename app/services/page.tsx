@@ -11,10 +11,10 @@ export const metadata: Metadata = {
     title: 'Services | PajamasWeb',
     description: 'Explore our web development and design services',
     type: 'website',
-    url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/services`,
+    url: 'https://www.pajamasweb.com/services',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
+        url: 'https://www.pajamasweb.com/thumbnail.png',
         width: 1200,
         height: 630,
         alt: 'PajamasWeb Services',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Services | PajamasWeb',
     description: 'Explore our web development and design services',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
+    images: ['https://www.pajamasweb.com/thumbnail.png'],
   },
 }
 
@@ -38,8 +38,8 @@ export default async function ServicesPage() {
   }
 
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'Home', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}` },
-    { name: 'Services', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/services` },
+    { name: 'Home', url: 'https://www.pajamasweb.com' },
+    { name: 'Services', url: 'https://www.pajamasweb.com/services' },
   ])
 
   return (

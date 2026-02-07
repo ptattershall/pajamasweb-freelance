@@ -7,27 +7,27 @@ import { FloatingChatButton } from '@/components/FloatingChatButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Case Studies | PJais.ai',
+  title: 'Case Studies | PajamasWeb',
   description: 'Explore our portfolio of successful projects and client transformations.',
   openGraph: {
-    title: 'Case Studies | PJais.ai',
+    title: 'Case Studies | PajamasWeb',
     description: 'Explore our portfolio of successful projects and client transformations.',
     type: 'website',
-    url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/case-studies`,
+    url: 'https://www.pajamasweb.com/case-studies',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
+        url: 'https://www.pajamasweb.com/thumbnail.png',
         width: 1200,
         height: 630,
-        alt: 'PJais.ai Case Studies',
+        alt: 'PajamasWeb Case Studies',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Case Studies | PJais.ai',
+    title: 'Case Studies | PajamasWeb',
     description: 'Explore our portfolio of successful projects and client transformations.',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
+    images: ['https://www.pajamasweb.com/thumbnail.png'],
   },
 }
 
@@ -35,8 +35,8 @@ export default function CaseStudiesPage() {
   const caseStudies = getAllCaseStudies()
 
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'Home', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}` },
-    { name: 'Case Studies', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/case-studies` },
+    { name: 'Home', url: 'https://www.pajamasweb.com' },
+    { name: 'Case Studies', url: 'https://www.pajamasweb.com/case-studies' },
   ])
 
   return (

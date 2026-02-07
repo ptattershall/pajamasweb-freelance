@@ -32,16 +32,16 @@ export async function generateMetadata(
     return {}
   }
 
-  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`
+  const ogImageUrl = 'https://www.pajamasweb.com/thumbnail.png'
 
   return {
-    title: `${post.title} | PJais.ai`,
+    title: `${post.title} | PajamasWeb`,
     description: post.summary,
     openGraph: {
       title: post.title,
       description: post.summary,
       type: 'article',
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/blog/${params.slug}`,
+      url: `https://www.pajamasweb.com/blog/${params.slug}`,
       images: [
         {
           url: ogImageUrl,
@@ -51,7 +51,7 @@ export async function generateMetadata(
         },
       ],
       publishedTime: post.publishedAt,
-      authors: ['PJais.ai'],
+      authors: ['PajamasWeb'],
     },
     twitter: {
       card: 'summary_large_image',

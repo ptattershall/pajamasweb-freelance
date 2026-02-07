@@ -7,27 +7,27 @@ import { FloatingChatButton } from '@/components/FloatingChatButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Blog | PJais.ai',
+  title: 'Blog | PajamasWeb',
   description: 'Read our latest articles about web design, development, and digital strategy.',
   openGraph: {
-    title: 'Blog | PJais.ai',
+    title: 'Blog | PajamasWeb',
     description: 'Read our latest articles about web design, development, and digital strategy.',
     type: 'website',
-    url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/blog`,
+    url: 'https://www.pajamasweb.com/blog',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`,
+        url: 'https://www.pajamasweb.com/thumbnail.png',
         width: 1200,
         height: 630,
-        alt: 'PJais.ai Blog',
+        alt: 'PajamasWeb Blog',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Blog | PJais.ai',
+    title: 'Blog | PajamasWeb',
     description: 'Read our latest articles about web design, development, and digital strategy.',
-    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/thumbnail.png`],
+    images: ['https://www.pajamasweb.com/thumbnail.png'],
   },
 }
 
@@ -35,8 +35,8 @@ export default function BlogPage() {
   const posts = getAllBlogPosts()
 
   const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'Home', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}` },
-    { name: 'Blog', url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/blog` },
+    { name: 'Home', url: 'https://www.pajamasweb.com' },
+    { name: 'Blog', url: 'https://www.pajamasweb.com/blog' },
   ])
 
   return (

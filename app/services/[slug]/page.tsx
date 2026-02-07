@@ -30,7 +30,7 @@ export async function generateMetadata({
     }
   }
 
-  const ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/og/service?title=${encodeURIComponent(service.title)}&description=${encodeURIComponent(service.summary || 'Service details')}`
+  const ogImageUrl = 'https://www.pajamasweb.com/thumbnail.png'
 
   return {
     title: `${service.title} | PajamasWeb`,
@@ -39,7 +39,7 @@ export async function generateMetadata({
       title: service.title,
       description: service.summary || 'Service details',
       type: 'website',
-      url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/services/${params.slug}`,
+      url: `https://www.pajamasweb.com/services/${params.slug}`,
       images: [
         {
           url: ogImageUrl,

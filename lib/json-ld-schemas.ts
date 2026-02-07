@@ -3,7 +3,7 @@
  * Generates structured data for SEO and rich results
  */
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+const APP_URL = 'https://www.pajamasweb.com'
 
 /**
  * Organization Schema
@@ -13,18 +13,17 @@ export function generateOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'PJais.ai',
+    name: 'PajamasWeb',
     url: APP_URL,
     logo: `${APP_URL}/logo.png`,
-    description: 'Professional web design, development, and AI-powered services',
+    description: 'Professional freelance web development, UI/UX design, and consulting services',
     sameAs: [
-      'https://twitter.com/pjaisai',
-      'https://linkedin.com/company/pjais-ai',
+      'https://twitter.com/pajamasweb',
     ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Service',
-      email: 'contact@pjais.ai',
+      email: 'contact@pajamasweb.com',
     },
   }
 }
