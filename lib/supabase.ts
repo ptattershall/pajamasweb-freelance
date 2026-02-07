@@ -311,33 +311,47 @@ export async function associateImageWithCaseStudy(
 }
 
 export async function getBlogPostImages(blogPostSlug: string): Promise<BlogPostImage[]> {
-  const { data, error } = await supabase
-    .from('blog_post_images')
-    .select('*, images(*)')
-    .eq('blog_post_slug', blogPostSlug)
-    .order('position', { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from('blog_post_images')
+      .select('*, images(*)')
+      .eq('blog_post_slug', blogPostSlug)
+      .order('position', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching blog post images:', error)
-    throw error
+    if (error) {
+      console.warn('Warning: Error fetching blog post images:', error)
+      // Return empty array instead of throwing to allow graceful degradation during build
+      return []
+    }
+
+    return (data as BlogPostImage[]) || []
+  } catch (error) {
+    console.warn('Warning: Error fetching blog post images:', error)
+    // Return empty array on network errors during build time
+    return []
   }
-
-  return (data as BlogPostImage[]) || []
 }
 
 export async function getCaseStudyImages(caseStudySlug: string): Promise<CaseStudyImage[]> {
-  const { data, error } = await supabase
-    .from('case_study_images')
-    .select('*, images(*)')
-    .eq('case_study_slug', caseStudySlug)
-    .order('position', { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from('case_study_images')
+      .select('*, images(*)')
+      .eq('case_study_slug', caseStudySlug)
+      .order('position', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching case study images:', error)
-    throw error
+    if (error) {
+      console.warn('Warning: Error fetching case study images:', error)
+      // Return empty array instead of throwing to allow graceful degradation during build
+      return []
+    }
+
+    return (data as CaseStudyImage[]) || []
+  } catch (error) {
+    console.warn('Warning: Error fetching case study images:', error)
+    // Return empty array on network errors during build time
+    return []
   }
-
-  return (data as CaseStudyImage[]) || []
 }
 
 // Authentication functions
