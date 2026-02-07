@@ -492,35 +492,47 @@ export interface Payment {
 
 // Services functions
 export async function getServices(activeOnly: boolean = true): Promise<Service[]> {
-  let query = supabase.from('services').select('*')
+  try {
+    let query = supabase.from('services').select('*')
 
-  if (activeOnly) {
-    query = query.eq('is_active', true)
-  }
+    if (activeOnly) {
+      query = query.eq('is_active', true)
+    }
 
-  const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query.order('created_at', { ascending: false })
 
-  if (error) {
+    if (error) {
+      console.error('Error fetching services:', error)
+      // Return empty array instead of throwing to allow graceful degradation during build
+      return []
+    }
+
+    return (data as Service[]) || []
+  } catch (error) {
     console.error('Error fetching services:', error)
-    throw error
+    // Return empty array on network errors during build time
+    return []
   }
-
-  return (data as Service[]) || []
 }
 
 export async function getServiceBySlug(slug: string): Promise<Service | null> {
-  const { data, error } = await supabase
-    .from('services')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('slug', slug)
+      .single()
 
-  if (error) {
+    if (error) {
+      console.error('Error fetching service:', error)
+      return null
+    }
+
+    return data as Service | null
+  } catch (error) {
     console.error('Error fetching service:', error)
-    throw error
+    return null
   }
-
-  return data as Service | null
 }
 
 export async function createService(service: Service) {

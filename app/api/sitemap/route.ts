@@ -104,15 +104,20 @@ export async function GET() {
     })
 
     // Services
-    const services = await getServices(true)
-    services.forEach((service) => {
-      entries.push({
-        url: `/services/${service.slug}`,
-        lastmod: service.updated_at?.split('T')[0] || today,
-        changefreq: 'weekly',
-        priority: 0.8,
+    try {
+      const services = await getServices(true)
+      services.forEach((service) => {
+        entries.push({
+          url: `/services/${service.slug}`,
+          lastmod: service.updated_at?.split('T')[0] || today,
+          changefreq: 'weekly',
+          priority: 0.8,
+        })
       })
-    })
+    } catch (error) {
+      console.warn('Failed to fetch services for sitemap:', error)
+      // Continue without services if fetch fails
+    }
 
     const xml = generateSitemapXml(entries)
 

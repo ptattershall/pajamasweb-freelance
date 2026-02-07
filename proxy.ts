@@ -12,7 +12,7 @@ const secret = new TextEncoder().encode(
   process.env.SUPABASE_JWT_SECRET || 'your-secret-key-here'
 )
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Check if the route is an admin route
