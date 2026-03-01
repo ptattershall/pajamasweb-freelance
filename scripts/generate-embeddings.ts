@@ -12,15 +12,15 @@
  * - Vector search functions must be created (see docs/database/04-vector-search-functions.sql)
  */
 
-import { getAllBlogPosts, getAllCaseStudies } from '@/lib/content'
+import { getAllBlogPosts, getAllCaseStudies } from '../lib/content'
 import {
   updateBlogPostEmbedding,
   updateCaseStudyEmbedding,
-} from '@/lib/supabase'
+} from '../lib/supabase'
 import {
   generateEmbedding,
   prepareContentForEmbedding,
-} from '@/lib/embeddings'
+} from '../lib/embeddings'
 
 const BATCH_DELAY = 500 // ms between API calls to avoid rate limiting
 

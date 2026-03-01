@@ -3,13 +3,23 @@
 import { useState } from 'react'
 import { createDepositCheckout, createRetainerCheckout } from '@/app/actions/checkout'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Service } from '@/lib/supabase'
 
-export default function ServiceCheckoutButtons({ service }: { service: Service }) {
+interface ServiceCheckoutButtonsProps {
+  service: Service
+  showEmbeddedCheckout?: boolean
+}
+
+export default function ServiceCheckoutButtons({ 
+  service, 
+  showEmbeddedCheckout = true 
+}: ServiceCheckoutButtonsProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [checkoutType, setCheckoutType] = useState<'deposit' | 'retainer' | null>(null)
   const router = useRouter()
 
   const handleCheckout = async (type: 'deposit' | 'retainer') => {
@@ -22,7 +32,6 @@ export default function ServiceCheckoutButtons({ service }: { service: Service }
     setError(null)
 
     try {
-      // Get user ID from session or use anonymous
       const userId = 'anonymous-' + Date.now()
 
       if (type === 'deposit') {
@@ -44,30 +53,69 @@ export default function ServiceCheckoutButtons({ service }: { service: Service }
     }
   }
 
+  const handleShowForm = (type: 'deposit' | 'retainer') => {
+    setCheckoutType(type)
+    setShowForm(true)
+  }
+
   if (!showForm) {
     return (
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-          disabled={loading}
-        >
-          Pay Deposit
-        </button>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
-          disabled={loading}
-        >
-          Subscribe to Retainer
-        </button>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          {showEmbeddedCheckout ? (
+            <Link
+              href={`/checkout/deposit?service=${service.slug}`}
+              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              Pay Deposit
+            </Link>
+          ) : (
+            <button
+              onClick={() => handleShowForm('deposit')}
+              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              disabled={loading}
+            >
+              Pay Deposit
+            </button>
+          )}
+          {showEmbeddedCheckout ? (
+            <Link
+              href={`/checkout/subscription?service=${service.slug}`}
+              className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 text-center font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+            >
+              Subscribe to Retainer
+            </Link>
+          ) : (
+            <button
+              onClick={() => handleShowForm('retainer')}
+              className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
+              disabled={loading}
+            >
+              Subscribe to Retainer
+            </button>
+          )}
+        </div>
+        {showEmbeddedCheckout && (
+          <p className="text-center text-xs text-slate-500">
+            Or{' '}
+            <button
+              onClick={() => handleShowForm('deposit')}
+              className="text-blue-600 underline hover:text-blue-700"
+            >
+              use Stripe checkout
+            </button>{' '}
+            for a hosted payment page
+          </p>
+        )}
       </div>
     )
   }
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-8">
-      <h3 className="mb-6 text-2xl font-bold text-slate-900">Get Started</h3>
+      <h3 className="mb-6 text-2xl font-bold text-slate-900">
+        {checkoutType === 'deposit' ? 'Pay Deposit' : 'Subscribe to Retainer'}
+      </h3>
 
       {error && (
         <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700">
@@ -91,22 +139,16 @@ export default function ServiceCheckoutButtons({ service }: { service: Service }
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <button
-          onClick={() => handleCheckout('deposit')}
+          onClick={() => handleCheckout(checkoutType || 'deposit')}
           className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           disabled={loading}
         >
-          {loading ? 'Processing...' : 'Pay Deposit'}
-        </button>
-        <button
-          onClick={() => handleCheckout('retainer')}
-          className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? 'Processing...' : 'Subscribe'}
+          {loading ? 'Processing...' : checkoutType === 'deposit' ? 'Pay Deposit' : 'Subscribe'}
         </button>
         <button
           onClick={() => {
             setShowForm(false)
+            setCheckoutType(null)
             setError(null)
           }}
           className="flex-1 rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"

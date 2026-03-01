@@ -5,7 +5,8 @@
  * Run with: npx ts-node scripts/seed-services.ts
  */
 
-require('dotenv').config({ path: '.env.local' })
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
 
 import { createClient } from '@supabase/supabase-js'
 

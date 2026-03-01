@@ -85,14 +85,14 @@ export default function InvoicesPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
-        {['all', 'open', 'paid', 'draft'].map((status) => (
+      <div className="flex flex-wrap gap-2 mb-6">
+        {['all', 'overdue', 'open', 'paid', 'draft'].map((status) => (
           <Button
             key={status}
             variant={filter === status ? 'default' : 'outline'}
             onClick={() => setFilter(status)}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {status === 'overdue' ? 'Overdue' : status.charAt(0).toUpperCase() + status.slice(1)}
           </Button>
         ))}
       </div>
@@ -131,9 +131,16 @@ export default function InvoicesPage() {
                       {formatCurrency(invoice.amount_cents, invoice.currency)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(invoice.status)}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusVariant(invoice.status)}>
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </Badge>
+                        {invoice.status === 'open' &&
+                          invoice.due_date &&
+                          new Date(invoice.due_date) < new Date() && (
+                            <Badge variant="destructive">Overdue</Badge>
+                          )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(invoice.due_date)}

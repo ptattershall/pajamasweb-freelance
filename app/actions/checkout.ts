@@ -3,10 +3,17 @@
 import Stripe from 'stripe'
 import { redirect } from 'next/navigation'
 import { getServiceBySlug } from '@/lib/supabase'
+import {
+  getOrCreateSubscriptionPrice,
+  createSubscriptionCheckoutSession,
+  type SubscriptionInterval,
+} from '@/lib/stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-10-29.clover',
 })
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
 
 export async function createDepositCheckout({
   serviceSlug,
@@ -73,67 +80,47 @@ export async function createRetainerCheckout({
   serviceSlug,
   userEmail,
   userId,
+  userName,
+  interval = 'month',
 }: {
   serviceSlug: string
   userEmail: string
   userId: string
+  userName?: string
+  interval?: SubscriptionInterval
 }) {
-  // Validate inputs
   if (!serviceSlug || !userEmail || !userId) {
     throw new Error('Missing required fields')
   }
 
-  // Fetch service from database
   const service = await getServiceBySlug(serviceSlug)
   if (!service) {
     throw new Error('Service not found')
   }
 
-  const stripePriceId = service.stripe_price_id
-  if (!stripePriceId) {
-    throw new Error('Service does not have a Stripe price configured')
+  if (!service.price_from_cents) {
+    throw new Error('Service has no price configured for subscription')
   }
 
-  // Create or get Stripe customer
-  const customer = await stripe.customers.create({
-    email: userEmail,
-    metadata: { userId },
+  const productName = `${service.title} Retainer`
+  const price = await getOrCreateSubscriptionPrice(
+    productName,
+    service.price_from_cents,
+    interval
+  )
+
+  const { sessionUrl } = await createSubscriptionCheckoutSession({
+    priceId: price.id,
+    customerEmail: userEmail,
+    userId,
+    serviceId: service.id,
+    serviceName: service.title,
+    successUrl: `${baseUrl}/checkout/success?type=subscription&session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${baseUrl}/services/${service.slug}`,
+    metadata: { customerName: userName || '' },
   })
 
-  if (!customer.id) {
-    throw new Error('Failed to create Stripe customer')
-  }
-
-  // Create subscription checkout session
-  const session = await stripe.checkout.sessions.create({
-    customer: customer.id as string,
-    mode: 'subscription',
-    line_items: [
-      {
-        price: stripePriceId,
-        quantity: 1,
-      },
-    ],
-    success_url: `${process.env.NEXT_PUBLIC_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL}/services/${service.slug}`,
-    subscription_data: {
-      metadata: {
-        serviceId: service.id || '',
-        userId,
-      },
-    },
-    metadata: {
-      serviceId: service.id || '',
-      type: 'retainer',
-      userId,
-    },
-  })
-
-  if (!session.url) {
-    throw new Error('Failed to create checkout session')
-  }
-
-  redirect(session.url)
+  redirect(sessionUrl)
 }
 
 export async function retrieveCheckoutSession(sessionId: string) {

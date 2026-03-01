@@ -12,13 +12,21 @@
 
 import fs from 'fs'
 import path from 'path'
-import { generateEmbedding, prepareContentForEmbedding } from '@/lib/embeddings'
-import { batchStoreEmbeddings, clearEmbeddingsByType } from '@/lib/rag-service'
-import { getServices } from '@/lib/supabase'
-import { getAllBlogPosts, getAllCaseStudies } from '@/lib/content'
+import { generateEmbedding, prepareContentForEmbedding } from '../lib/embeddings'
+import { batchStoreEmbeddings, clearEmbeddingsByType } from '../lib/rag-service'
+import { getServices } from '../lib/supabase'
+import { getAllBlogPosts, getAllCaseStudies } from '../lib/content'
 
 const BATCH_SIZE = 10
 const DELAY_MS = 500 // Delay between batches to avoid rate limiting
+
+type EmbeddingItem = {
+  content: string
+  embedding: number[]
+  type: 'service' | 'faq' | 'blog' | 'case_study'
+  source: string
+  metadata?: Record<string, unknown>
+}
 
 async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -39,7 +47,7 @@ async function generateServiceEmbeddings() {
     await clearEmbeddingsByType('service')
     console.log(`🗑️  Cleared existing service embeddings`)
 
-    const items = []
+    const items: EmbeddingItem[] = []
     for (const service of services) {
       const content = prepareContentForEmbedding({
         title: service.title,
@@ -91,7 +99,7 @@ async function generateFAQEmbeddings() {
     await clearEmbeddingsByType('faq')
     console.log(`🗑️  Cleared existing FAQ embeddings`)
 
-    const items = []
+    const items: EmbeddingItem[] = []
     for (const faq of faqs) {
       const content = `Q: ${faq.question}\nA: ${faq.answer}`
       const { embedding } = await generateEmbedding(content)
@@ -139,7 +147,7 @@ async function generateBlogEmbeddings() {
     await clearEmbeddingsByType('blog')
     console.log(`🗑️  Cleared existing blog embeddings`)
 
-    const items = []
+    const items: EmbeddingItem[] = []
     for (const post of posts) {
       const content = prepareContentForEmbedding({
         title: post.title,
@@ -194,7 +202,7 @@ async function generateCaseStudyEmbeddings() {
     await clearEmbeddingsByType('case_study')
     console.log(`🗑️  Cleared existing case study embeddings`)
 
-    const items = []
+    const items: EmbeddingItem[] = []
     for (const study of studies) {
       const content = prepareContentForEmbedding({
         title: study.title,

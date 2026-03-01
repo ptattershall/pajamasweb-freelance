@@ -504,6 +504,29 @@ export interface Payment {
   updated_at?: string
 }
 
+export interface Subscription {
+  id?: string
+  client_id: string | null
+  stripe_subscription_id: string
+  stripe_customer_id?: string
+  stripe_price_id: string
+  status: 'active' | 'canceled' | 'past_due' | 'unpaid' | 'trialing' | 'incomplete' | 'incomplete_expired' | 'paused'
+  amount_cents: number
+  currency: string
+  interval: 'month' | 'year'
+  interval_count: number
+  current_period_start?: string
+  current_period_end?: string
+  cancel_at_period_end?: boolean
+  canceled_at?: string
+  trial_start?: string
+  trial_end?: string
+  related_service?: string
+  metadata?: Record<string, any>
+  created_at?: string
+  updated_at?: string
+}
+
 // Services functions
 export async function getServices(activeOnly: boolean = true): Promise<Service[]> {
   try {
@@ -623,6 +646,71 @@ export async function getPaymentByIntentId(intentId: string) {
   return data || null
 }
 
+export async function getPaymentById(id: string) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching payment:', error)
+    throw error
+  }
+
+  return data || null
+}
+
+export async function getPaymentsByUserWithFilters(
+  userId: string,
+  options?: {
+    status?: string
+    type?: 'deposit' | 'retainer' | 'invoice'
+    limit?: number
+    offset?: number
+  }
+): Promise<{ payments: Payment[]; total: number }> {
+  try {
+    let query = supabase
+      .from('payments')
+      .select('*', { count: 'exact' })
+      .eq('client_id', userId)
+
+    if (options?.status && options.status !== 'all') {
+      query = query.eq('status', options.status)
+    }
+
+    if (options?.type && options.type !== 'all' as any) {
+      query = query.eq('type', options.type)
+    }
+
+    query = query.order('created_at', { ascending: false })
+
+    if (options?.limit) {
+      query = query.limit(options.limit)
+    }
+
+    if (options?.offset) {
+      query = query.range(options.offset, options.offset + (options.limit || 10) - 1)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) {
+      console.error('Error fetching user payments:', error)
+      throw error
+    }
+
+    return {
+      payments: (data as Payment[]) || [],
+      total: count || 0,
+    }
+  } catch (error) {
+    console.error('Error fetching user payments:', error)
+    return { payments: [], total: 0 }
+  }
+}
+
 export async function updatePayment(id: string, updates: Partial<Payment>) {
   const { data, error } = await supabase
     .from('payments')
@@ -636,5 +724,100 @@ export async function updatePayment(id: string, updates: Partial<Payment>) {
   }
 
   return data[0]
+}
+
+export async function createSubscription(subscription: Omit<Subscription, 'id' | 'created_at' | 'updated_at'>) {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .insert([subscription])
+    .select()
+
+  if (error) {
+    console.error('Error creating subscription:', error)
+    throw error
+  }
+
+  return data[0] as Subscription
+}
+
+export async function getSubscriptionByStripeId(stripeSubscriptionId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('stripe_subscription_id', stripeSubscriptionId)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching subscription:', error)
+    throw error
+  }
+
+  return data as Subscription | null
+}
+
+export async function getSubscriptionsByUser(userId: string): Promise<Subscription[]> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('client_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching user subscriptions:', error)
+    throw error
+  }
+
+  return (data as Subscription[]) || []
+}
+
+export async function getActiveSubscriptionsByUser(userId: string): Promise<Subscription[]> {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('client_id', userId)
+    .in('status', ['active', 'trialing'])
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching active subscriptions:', error)
+    throw error
+  }
+
+  return (data as Subscription[]) || []
+}
+
+export async function updateSubscription(
+  stripeSubscriptionId: string,
+  updates: Partial<Omit<Subscription, 'id' | 'client_id' | 'stripe_subscription_id'>>
+) {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_subscription_id', stripeSubscriptionId)
+    .select()
+
+  if (error) {
+    console.error('Error updating subscription:', error)
+    throw error
+  }
+
+  return data[0] as Subscription
+}
+
+export async function upsertSubscription(subscription: Omit<Subscription, 'id' | 'created_at' | 'updated_at'>) {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .upsert(subscription, { onConflict: 'stripe_subscription_id' })
+    .select()
+
+  if (error) {
+    console.error('Error upserting subscription:', error)
+    throw error
+  }
+
+  return data[0] as Subscription
 }
 

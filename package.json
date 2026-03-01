@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "tsx scripts/sync-metadata.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "sync-metadata": "tsx scripts/sync-metadata.ts",
     "test:auth": "tsx scripts/test-auth.ts",
     "test:security": "tsx scripts/test-security.ts",
     "test:performance": "tsx scripts/test-performance.ts",
@@ -18,6 +20,7 @@
     "@ai-sdk/react": "^2.0.93",
     "@hookform/resolvers": "^5.2.2",
     "@langchain/openai": "^1.1.0",
+    "@mdxeditor/editor": "^3.52.4",
     "@prisma/client": "^6.19.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
@@ -26,7 +29,9 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "@sentry/nextjs": "^10.25.0",
-    "@supabase/supabase-js": "^2.81.1",
+    "@stripe/react-stripe-js": "^5.6.0",
+    "@stripe/stripe-js": "^8.8.0",
+    "@supabase/supabase-js": "^2.95.3",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.6",
     "@vercel/og": "^0.8.5",
@@ -45,6 +50,7 @@
     "pg": "^8.16.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-easy-crop": "^5.5.6",
     "react-hook-form": "^7.66.0",
     "resend": "^6.4.2",
     "satori": "^0.18.3",
@@ -67,6 +73,7 @@
     "shadcn-ui": "^0.9.5",
     "tailwindcss": "^3.4.18",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.0",
     "typescript": "^5"
   }
 }

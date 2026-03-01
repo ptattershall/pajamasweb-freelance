@@ -9,11 +9,12 @@
  * Run with: node scripts/setup-supabase.js
  */
 
-require('dotenv').config({ path: '.env.local' })
+import * as dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
 
-const { createClient } = require('@supabase/supabase-js')
-const fs = require('fs')
-const path = require('path')
+import { createClient } from '@supabase/supabase-js'
+import * as fs from 'fs'
+import * as path from 'path'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_SECRET_KEY
@@ -67,7 +68,7 @@ async function setupDatabase() {
     console.log('✅ Database tables created/verified successfully')
     return true
   } catch (error) {
-    console.error('⚠️  Database setup encountered an issue')
+    console.error('⚠️  Database setup encountered an issue:', error.message || error)
     console.log('   You may need to create tables manually in Supabase SQL Editor')
     console.log('   Path: docs/database/02-image-metadata-schema.sql')
     return true // Don't fail completely
@@ -78,7 +79,7 @@ async function setupStorageBucket() {
   console.log('\n🪣 Setting up storage bucket...')
   
   try {
-    const { data, error } = await supabase.storage.createBucket('hero-images', {
+    const { error } = await supabase.storage.createBucket('hero-images', {
       public: true,
     })
     
@@ -106,7 +107,7 @@ async function createAdminUser() {
   const adminPassword = process.env.ADMIN_PASSWORD || 'ChangeMe123!'
   
   try {
-    const { data, error } = await supabase.auth.admin.createUser({
+      const { error } = await supabase.auth.admin.createUser({
       email: adminEmail,
       password: adminPassword,
       email_confirm: true,

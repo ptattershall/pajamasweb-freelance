@@ -9,5 +9,6 @@
         "Langflow",
         "pgvector",
         "timestamptz"
-    ]
+    ],
+    "prisma.pinToPrisma6": true
 }

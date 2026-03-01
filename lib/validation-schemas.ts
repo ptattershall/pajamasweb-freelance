@@ -8,6 +8,50 @@
 import { z } from 'zod'
 
 // ============================================================================
+// BLOG POST SCHEMAS
+// ============================================================================
+
+export const blogPostSchema = z.object({
+  slug: z
+    .string()
+    .min(3, 'Slug must be at least 3 characters')
+    .max(100, 'Slug must be less than 100 characters')
+    .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
+  title: z
+    .string()
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be less than 200 characters'),
+  summary: z
+    .string()
+    .min(20, 'Summary must be at least 20 characters')
+    .max(500, 'Summary must be less than 500 characters'),
+  publishedAt: z.string().min(1, 'Publish date is required'),
+  tags: z.array(z.string()).min(1, 'At least one tag is required'),
+  heroImage: z.string().url().optional().or(z.literal('')),
+  content: z.string().min(50, 'Content must be at least 50 characters'),
+})
+
+export const blogPostUpdateSchema = z.object({
+  title: z
+    .string()
+    .min(5, 'Title must be at least 5 characters')
+    .max(200, 'Title must be less than 200 characters')
+    .optional(),
+  summary: z
+    .string()
+    .min(20, 'Summary must be at least 20 characters')
+    .max(500, 'Summary must be less than 500 characters')
+    .optional(),
+  publishedAt: z.string().min(1, 'Publish date is required').optional(),
+  tags: z.array(z.string()).min(1, 'At least one tag is required').optional(),
+  heroImage: z.string().url().optional().or(z.literal('')),
+  content: z.string().min(50, 'Content must be at least 50 characters').optional(),
+})
+
+export type BlogPostInput = z.infer<typeof blogPostSchema>
+export type BlogPostUpdateInput = z.infer<typeof blogPostUpdateSchema>
+
+// ============================================================================
 // AUTH SCHEMAS
 // ============================================================================
 
@@ -188,6 +232,60 @@ export const createInvoiceSchema = z.object({
 export const updateInvoiceSchema = createInvoiceSchema.partial()
 
 // ============================================================================
+// PAYMENT INTENT SCHEMAS
+// ============================================================================
+
+export const createPaymentIntentSchema = z.object({
+  serviceSlug: z.string().optional(),
+  amountCents: z.number().int().min(50, 'Amount must be at least 50 cents').optional(),
+  userId: z.string().min(1, 'User ID is required'),
+  userEmail: z.string().email('Valid email is required'),
+  userName: z.string().optional(),
+  description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
+  metadata: z.record(z.string()).optional(),
+}).refine(
+  (data) => data.serviceSlug || data.amountCents,
+  { message: 'Either serviceSlug or amountCents is required' }
+)
+
+export const paymentIntentResponseSchema = z.object({
+  clientSecret: z.string(),
+  paymentIntentId: z.string(),
+  amount: z.number().int().positive(),
+  currency: z.string(),
+  customerId: z.string().optional(),
+})
+
+// ============================================================================
+// DATABASE SCHEMAS - PAYMENTS
+// ============================================================================
+
+export const paymentSchema = z.object({
+  id: z.string().uuid(),
+  client_id: z.string().uuid().nullable(),
+  intent_id: z.string().nullable(),
+  type: z.enum(['deposit', 'retainer', 'invoice']),
+  amount_cents: z.number().int().positive(),
+  currency: z.string().default('usd'),
+  status: z.string(),
+  related_service: z.string().uuid().nullable(),
+  metadata: z.record(z.unknown()).nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
+
+export const createPaymentSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  intent_id: z.string().optional(),
+  type: z.enum(['deposit', 'retainer', 'invoice']),
+  amount_cents: z.number().int().positive('Amount must be positive'),
+  currency: z.string().default('usd'),
+  status: z.string().default('pending'),
+  related_service: z.string().uuid('Invalid service ID').optional(),
+  metadata: z.record(z.unknown()).optional(),
+})
+
+// ============================================================================
 // DATABASE SCHEMAS - CONTRACTS
 // ============================================================================
 
@@ -354,4 +452,10 @@ export type CreateMilestoneUpdateRecordInput = z.infer<typeof createMilestoneUpd
 
 // Booking history types
 export type BookingHistory = z.infer<typeof bookingHistorySchema>
+
+// Payment types
+export type CreatePaymentIntentInput = z.infer<typeof createPaymentIntentSchema>
+export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>
+export type Payment = z.infer<typeof paymentSchema>
+export type CreatePaymentInput = z.infer<typeof createPaymentSchema>
 
