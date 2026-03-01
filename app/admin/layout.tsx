@@ -32,6 +32,16 @@ export default function AdminLayout({
               Clients
             </Button>
           </Link>
+          <Link href="/admin/invoices">
+            <Button variant="ghost" className="w-full justify-start">
+              Invoices
+            </Button>
+          </Link>
+          <Link href="/admin/payments">
+            <Button variant="ghost" className="w-full justify-start">
+              Payments
+            </Button>
+          </Link>
 
           {/* Content Management Section */}
           <div className="pt-4 pb-2">
