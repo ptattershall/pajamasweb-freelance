@@ -2,7 +2,7 @@
  * Admin Single Milestone API Route
  */
 
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 import { updateMilestoneSchema } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, rateLimiters, getRateLimitHeaders } from '@/lib/rate-limit'
@@ -15,11 +15,9 @@ export async function PUT(
   try {
     const { id } = await params
 
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
     // Validate CSRF token
     const csrfValidation = await validateCsrfToken(request)
@@ -55,17 +53,6 @@ export async function PUT(
 
     const supabase = createServerSupabaseClient()
 
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can update milestones' }, { status: 403 })
-    }
-
     const { title, description, due_date, status, progress_percent } = validation.data
 
     // Update milestone
@@ -100,11 +87,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
     // Validate CSRF token
     const csrfValidation = await validateCsrfToken(request)
@@ -128,17 +113,6 @@ export async function DELETE(
     }
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can delete milestones' }, { status: 403 })
-    }
 
     // Delete milestone
     const { error } = await supabase

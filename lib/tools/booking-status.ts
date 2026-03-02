@@ -7,7 +7,7 @@
 
 import { tool } from 'ai';
 import { z } from 'zod';
-import { getBookingSummary, getUpcomingBookings, formatBooking } from '@/lib/client-service';
+import { getBookingSummary, getUpcomingBookings } from '@/lib/client-service';
 
 export const bookingStatusInputSchema = z.object({
   userId: z.string().describe('The authenticated user ID'),

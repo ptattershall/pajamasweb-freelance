@@ -8,6 +8,19 @@ import { getAuthenticatedUser } from '@/lib/auth-service'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 
+type SessionForExport = {
+  id: string
+  title: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+type ChatMessageRow = {
+  role: string
+  content: string
+  created_at: string
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -56,7 +69,7 @@ export async function GET(
       )
     }
 
-    const filename = `${session.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
+    const filename = `${(session.title ?? 'chat').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`
 
     if (format === 'json') {
       return exportJSON(session, messages || [], filename)
@@ -77,7 +90,7 @@ export async function GET(
   }
 }
 
-function exportJSON(session: any, messages: any[], filename: string) {
+function exportJSON(session: SessionForExport, messages: ChatMessageRow[], filename: string) {
   const data = {
     session: {
       id: session.id,
@@ -101,17 +114,17 @@ function exportJSON(session: any, messages: any[], filename: string) {
   })
 }
 
-function exportCSV(session: any, messages: any[], filename: string) {
+function exportCSV(session: SessionForExport, messages: ChatMessageRow[], filename: string) {
   const headers = ['Timestamp', 'Role', 'Message']
   const rows = messages.map((m) => [
     new Date(m.created_at).toLocaleString(),
     m.role,
-    `"${m.content.replace(/"/g, '""')}"`,
+    `"${(m.content ?? '').replace(/"/g, '""')}"`,
   ])
 
   const csv = [
     `Conversation: ${session.title}`,
-    `Created: ${new Date(session.created_at).toLocaleString()}`,
+    `Created: ${new Date(session.created_at ?? 0).toLocaleString()}`,
     '',
     headers.join(','),
     ...rows.map((r) => r.join(',')),

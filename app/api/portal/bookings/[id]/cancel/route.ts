@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { getAuthenticatedUser } from '@/lib/auth-service'
+import { getProfileForRequest } from '@/lib/auth-service'
 
 /**
- * Cancel a booking
+ * Cancel a booking. CLIENT: own booking; SALES/DEV: assigned booking; OWNER: any.
  */
 export async function POST(
   request: NextRequest,
@@ -11,10 +11,9 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    // Get authenticated user from session
-    const { user, error: authError } = await getAuthenticatedUser(request)
+    const { user, profile, error: authError } = await getProfileForRequest(request)
 
-    if (authError || !user) {
+    if (authError || !user || !profile) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -23,13 +22,13 @@ export async function POST(
 
     const supabase = createServerSupabaseClient()
 
-    // Fetch the booking to verify ownership
-    const { data: booking, error: fetchError } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('id', id)
-      .eq('client_id', user.id)
-      .single()
+    let query = supabase.from('bookings').select('*').eq('id', id)
+    if (profile.role === 'CLIENT') {
+      query = query.eq('client_id', user.id)
+    } else if (profile.role === 'SALES' || profile.role === 'DEV') {
+      query = query.eq('assigned_user_id', user.id)
+    }
+    const { data: booking, error: fetchError } = await query.single()
 
     if (fetchError || !booking) {
       return NextResponse.json(

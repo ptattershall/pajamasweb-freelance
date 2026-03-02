@@ -122,7 +122,7 @@ export function DepositCheckoutForm({
           Processing Payment
         </h3>
         <p className="text-blue-700">
-          Your payment is being processed. You'll receive a confirmation shortly.
+          Your payment is being processed. You&apos;ll receive a confirmation shortly.
         </p>
       </div>
     )
@@ -165,7 +165,7 @@ export function DepositCheckoutForm({
       <button
         type="submit"
         disabled={!stripe || !elements || isProcessing}
-        className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full min-h-[44px] rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isProcessing ? (
           <span className="flex items-center justify-center gap-2">

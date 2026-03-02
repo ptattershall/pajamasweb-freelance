@@ -77,7 +77,7 @@ answers service FAQs,
 
 surfaces client-specific info (deadlines, invoices due, next meeting).
 
-2) Goals & KPIs
+1) Goals & KPIs
 
 Primary: 5+ qualified leads/mo, ≥30% lead→call, ≥40% call→proposal, ≥25% proposal→deposit.
 
@@ -85,7 +85,7 @@ Secondary: Avg. time-to-first-response < 2 min (AI chat), blog SEO traffic +20% 
 
 Quality: LCP < 2.5s, 0 P0 production errors/wk, WCAG AA.
 
-3) Users & Personas
+1) Users & Personas
 
 Founder/Operator (you): publishes posts, edits services, sends proposals/invoices, manages bookings.
 
@@ -93,7 +93,7 @@ Prospect: reads services/cases, chats with AI, books intro call, pays deposit.
 
 Client: receives invoices/retainers, checks due dates, downloads deliverables, messages via portal.
 
-4) Scope (v1)
+1) Scope (v1)
 4.1 Content (MDX-first)
 
 MDX + Contentlayer for blog & case studies (versioned in Git).
@@ -148,13 +148,13 @@ Guardrails: disclaimers, max confidence thresholds; force human handoff when unc
 
 Authenticated view for invoices (Stripe hosted links), contracts, upcoming bookings, deliverables (Supabase Storage signed URLs), chat history.
 
-5) Non-Goals (v1)
+1) Non-Goals (v1)
 
 No multi-tenant agencies or multi-user client teams beyond “client + invited email”.
 
 No complex proposal builder (start with Markdown → PDF).
 
-6) Architecture
+1) Architecture
 6.1 Frontend
 
 Next.js 15 (App Router, RSC, Server Actions), TypeScript, pnpm.
@@ -199,7 +199,7 @@ get_next_booking(client_id)
 
 Tools call server actions → DB/Stripe/Calendar.
 
-7) Data Model (additions/updates)
+1) Data Model (additions/updates)
 -- users via supabase.auth.users
 
 create table profiles (
@@ -286,7 +286,7 @@ bookings, payments: user can read only their own; OWNER can read all.
 
 blog_posts_meta, case_studies_meta, services: public read where published/active.
 
-8) Key User Flows
+1) Key User Flows
 8.1 Prospect → Lead → Deposit
 
 Reads service page → clicks Book Intro or Get Estimate.
@@ -307,7 +307,7 @@ Direct API path: user selects slot from availability derived from your GCal; on 
 
 Auth → view invoices (Stripe hosted links), upcoming meetings (bookings), due dates (milestones), deliverables (signed URLs), AI chat context-aware.
 
-9) AI Estimator: Initial Heuristics
+1) AI Estimator: Initial Heuristics
 Inputs
 
 Project type (site, web app, ecom, AI agent/automation)
@@ -346,7 +346,7 @@ Always include disclaimer and “Book a call for a precise quote.”
 
 Escalate to human if low confidence (e.g., too many unknowns).
 
-10) Integrations
+1) Integrations
 Stripe
 
 Deposits: PaymentIntent/Checkout (one-off).
@@ -365,7 +365,7 @@ Resend
 
 Templates: inquiry receipt, booking confirmation, payment receipt, invoice issued.
 
-11) Security & Compliance
+1) Security & Compliance
 
 Strict CSP, HSTS, referrer-policy, frame-ancestors none.
 
@@ -377,13 +377,13 @@ Rate-limit POSTs (Arcjet or middleware + Redis).
 
 Log access to client artifacts.
 
-12) Analytics & Events
+1) Analytics & Events
 
 Axiom/PostHog: page_view, service_cta_click, chat_open, estimate_shown, booking_started/completed, checkout_started/completed, invoice_viewed/paid.
 
 Weekly KPI email to you.
 
-13) SEO
+1) SEO
 
 MDX → OpenGraph images (Satori/Vercel OG).
 
@@ -391,7 +391,7 @@ JSON-LD: Service, Article, Organization, FAQ for service pages.
 
 Canonicals, sitemap, robots.
 
-14) Testing
+1) Testing
 
 Unit: Vitest
 
@@ -401,7 +401,7 @@ A11y: Axe CI
 
 Contract: Zod schemas for chat tools & API payloads
 
-15) Milestones
+1) Milestones
 
 M1 – Foundation (1–2 wks)
 
@@ -431,7 +431,7 @@ M5 – Polish & SEO (ongoing)
 
 OG images, JSON-LD, performance passes, A/B test CTAs.
 
-16) Open Questions
+1) Open Questions
 
 Calendar path: Cal.com (speed) vs direct Google API (control).
 
@@ -443,7 +443,7 @@ Which LLM(s): cost/latency tradeoffs; need evals for estimator accuracy.
 
 Brand kit: final color/typography/logo lockups.
 
-17) Implementation Notes & Snippets
+1) Implementation Notes & Snippets
 
 AI Tool Contracts (Zod)
 
@@ -461,7 +461,6 @@ const PricingSuggestionResult = z.object({
   confidence: z.number().min(0).max(1),
   factors: z.array(z.string())
 });
-
 
 Server Action (Stripe deposit)
 
@@ -481,10 +480,9 @@ export async function createDepositCheckout({serviceId, amountCents}:{serviceId:
   return { url: session.url }
 }
 
-
 Google Calendar OAuth (direct path) – high level
 
-Use OAuth screen + scopes: https://www.googleapis.com/auth/calendar.events.
+Use OAuth screen + scopes: <https://www.googleapis.com/auth/calendar.events>.
 
 Store encrypted refresh_token tied to OWNER profile.
 

@@ -89,7 +89,7 @@ export function HomePageClient() {
             </Link>
             <a
               href="#contact"
-              className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              className="inline-flex items-center justify-center min-h-[44px] rounded-lg bg-black px-4 py-2 font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             >
               Contact
             </a>
@@ -99,8 +99,15 @@ export function HomePageClient() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="sm:hidden p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors"
-            aria-label="Toggle menu"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setMobileMenuOpen((prev) => !prev);
+              }
+            }}
+            className="sm:hidden min-h-[44px] min-w-[44px] p-2 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
               <X size={24} className="text-black dark:text-white" />
@@ -113,38 +120,38 @@ export function HomePageClient() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black">
-            <div className="px-6 py-4 space-y-3">
+            <div className="px-6 py-4 space-y-1">
               <a
                 href="#offerings"
-                className="block text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
+                className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Services
               </a>
               <Link
                 href="/blog"
-                className="block text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
+                className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Blog
               </Link>
               <Link
                 href="/case-studies"
-                className="block text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
+                className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Case Studies
               </Link>
               <Link
                 href="/portal/signin"
-                className="block text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
+                className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign In
               </Link>
               <a
                 href="#contact"
-                className="block text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
+                className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Contact
@@ -154,6 +161,7 @@ export function HomePageClient() {
         )}
       </nav>
 
+      <main id="main-content">
       {/* Hero Section */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-20 sm:px-8">
         <Image
@@ -175,7 +183,7 @@ export function HomePageClient() {
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
             <a
               href="#contact"
-              className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 font-semibold text-black transition-colors hover:bg-zinc-200"
+              className="inline-flex items-center justify-center min-h-[44px] rounded-lg bg-white px-8 py-3 font-semibold text-black transition-colors hover:bg-zinc-200"
             >
               Get in Touch
             </a>
@@ -358,6 +366,7 @@ export function HomePageClient() {
           </div>
         </div>
       </footer>
+      </main>
 
       {/* Floating Chat Button */}
       <FloatingChatButton />

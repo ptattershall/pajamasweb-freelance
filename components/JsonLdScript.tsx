@@ -4,7 +4,7 @@
  */
 
 interface JsonLdScriptProps {
-  schema: Record<string, any>
+  schema: Record<string, unknown>
 }
 
 export function JsonLdScript({ schema }: JsonLdScriptProps) {
@@ -23,7 +23,7 @@ export function JsonLdScript({ schema }: JsonLdScriptProps) {
  * Renders multiple JSON-LD schemas
  */
 interface MultipleJsonLdScriptsProps {
-  schemas: Record<string, any>[]
+  schemas: Record<string, unknown>[]
 }
 
 export function MultipleJsonLdScripts({ schemas }: MultipleJsonLdScriptsProps) {

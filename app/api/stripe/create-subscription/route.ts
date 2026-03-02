@@ -17,7 +17,7 @@ const createSubscriptionSchema = z.object({
   trialDays: z.number().min(0).max(90).optional(),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 })
 
 export async function POST(request: NextRequest) {

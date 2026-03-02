@@ -1,6 +1,6 @@
 /**
  * Pricing Suggestion Tool for Vercel AI SDK
- * 
+ *
  * Provides price estimates for web projects based on requirements.
  * Integrates with the AI chat to suggest pricing when users ask about costs.
  */
@@ -8,6 +8,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { calculatePricing, formatPricingResult, getConfidenceExplanation } from '@/lib/pricing';
+import { sendQuoteEmail } from '@/lib/email-service';
 
 // Zod schema for pricing suggestion input
 export const pricingSuggestionInputSchema = z.object({
@@ -87,6 +88,38 @@ export const pricingSuggestionTool = tool({
       return {
         success: false,
         error: 'Failed to calculate pricing. Please try again or contact us for a custom quote.',
+      };
+    }
+  },
+});
+
+/**
+ * Tool to email a quote/estimate to the user. Use after providing a pricing suggestion when the user asks to receive the estimate by email.
+ */
+export const sendQuoteToEmailTool = tool({
+  description:
+    'Email a project estimate/quote to the user. Use when the user asks to receive the estimate by email or to send the quote to their email address. Requires the recipient email and the quote body (formatted estimate text).',
+  inputSchema: z.object({
+    to: z.string().email().describe('Recipient email address'),
+    recipientName: z.string().max(200).optional().describe('Recipient name for the greeting'),
+    quoteBody: z.string().min(1).max(10000).describe('The full quote/estimate text to send (e.g. formatted price range, factors, disclaimer)'),
+  }),
+  execute: async (params) => {
+    try {
+      await sendQuoteEmail({
+        to: params.to,
+        recipientName: params.recipientName,
+        quoteBody: params.quoteBody,
+      });
+      return {
+        success: true,
+        message: `Quote sent to ${params.to}. They should receive it shortly.`,
+      };
+    } catch (error) {
+      console.error('Error sending quote email:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to send quote email.',
       };
     }
   },

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createDepositCheckout, createRetainerCheckout } from '@/app/actions/checkout'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Service } from '@/lib/supabase'
 
@@ -20,7 +19,6 @@ export default function ServiceCheckoutButtons({
   const [email, setEmail] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [checkoutType, setCheckoutType] = useState<'deposit' | 'retainer' | null>(null)
-  const router = useRouter()
 
   const handleCheckout = async (type: 'deposit' | 'retainer') => {
     if (!email) {
@@ -65,14 +63,14 @@ export default function ServiceCheckoutButtons({
           {showEmbeddedCheckout ? (
             <Link
               href={`/checkout/deposit?service=${service.slug}`}
-              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-700"
             >
               Pay Deposit
             </Link>
           ) : (
             <button
               onClick={() => handleShowForm('deposit')}
-              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               disabled={loading}
             >
               Pay Deposit
@@ -81,14 +79,14 @@ export default function ServiceCheckoutButtons({
           {showEmbeddedCheckout ? (
             <Link
               href={`/checkout/subscription?service=${service.slug}`}
-              className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 text-center font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border-2 border-blue-600 px-6 py-3 text-center font-semibold text-blue-600 transition-colors hover:bg-blue-50"
             >
               Subscribe to Retainer
             </Link>
           ) : (
             <button
               onClick={() => handleShowForm('retainer')}
-              className="flex-1 rounded-lg border-2 border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border-2 border-blue-600 px-6 py-3 font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
               disabled={loading}
             >
               Subscribe to Retainer
@@ -138,9 +136,9 @@ export default function ServiceCheckoutButtons({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          onClick={() => handleCheckout(checkoutType || 'deposit')}
-          className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+<button
+        onClick={() => handleCheckout(checkoutType || 'deposit')}
+          className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           disabled={loading}
         >
           {loading ? 'Processing...' : checkoutType === 'deposit' ? 'Pay Deposit' : 'Subscribe'}
@@ -151,7 +149,7 @@ export default function ServiceCheckoutButtons({
             setCheckoutType(null)
             setError(null)
           }}
-          className="flex-1 rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          className="flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
           disabled={loading}
         >
           Cancel

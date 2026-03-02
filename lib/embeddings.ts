@@ -5,7 +5,6 @@
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const OPENAI_MODEL = 'text-embedding-3-small'
-const EMBEDDING_DIMENSION = 1536
 
 if (!OPENAI_API_KEY) {
   console.warn('⚠️  OPENAI_API_KEY not set. Embeddings will not be generated.')
@@ -84,7 +83,7 @@ export async function generateEmbeddings(texts: string[]): Promise<EmbeddingResu
 
     const data = await response.json()
     
-    return data.data.map((item: any) => ({
+    return data.data.map((item: { embedding: number[] }) => ({
       embedding: item.embedding,
       tokens: data.usage.total_tokens,
     }))

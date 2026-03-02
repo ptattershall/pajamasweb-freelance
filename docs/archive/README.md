@@ -1,26 +1,20 @@
-# Archive - Historical Phase Summaries
+# Archive – Historical docs
 
-This folder contains historical phase summaries and progress reports from the project development.
+Phase summaries, session notes, and completion reports live here so the main **docs/** folder stays easy to navigate. Nothing was deleted; everything was moved for reference.
 
-## 📋 Contents
+## 📁 Structure
 
-- **PHASE2_SUMMARY.md** - Phase 2 completion summary
-- **PHASE3_SUMMARY.md** - Phase 3 completion summary
-- **PHASE5_SUMMARY.md** - Phase 5 completion summary
-- **PHASE5_FINAL_SUMMARY.md** - Phase 5 final report
-- **PHASE6_PREVIEW.md** - Phase 6 preview
-- **PHASE6_SUMMARY.md** - Phase 6 completion summary
+- **Root** – Old root-level phase/session docs (PHASE5_*, SESSION***, TASK**, etc.)
+- **prisma/** – Prisma implementation/tracking docs (quick start remains in docs root)
+- **rest-api-zod/** – Extra REST API + Zod guides (index remains in docs root)
+- **calcom/** – Cal.com implementation summaries (README + quick start remain in docs/calcom/)
+- **ai-chat/** – Legacy ai-chat phase-complete docs (canonical AI chat docs are in features/04-ai-chat/)
+- **features/** – Phase completion/session docs moved out of each feature folder:
+  - **04-ai-chat/** – Phase implementation/setup docs
+  - **05-client-portal/** – Phase summaries, invitation system tracking, testing guides
+  - **06-foundation-infrastructure/** – Completion/technical summaries
+  - **07-seo-polish/** – Phase completion and quick starts
 
-## 📖 Current Documentation
+## 📖 Current documentation
 
-For current feature documentation, see:
-
-- **[../calcom/](../calcom/)** - Cal.com booking system
-- **[../ai-chat/](../ai-chat/)** - AI Chat feature
-- **[../features/](../features/)** - Feature guides
-- **[../database/](../database/)** - Database schema
-
-## 🔍 Reference
-
-These documents are kept for historical reference and context about the project's development timeline and evolution.
-
+Use **[../README.md](../README.md)** and **[../features/](../features/)** for up-to-date docs.

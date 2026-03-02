@@ -2,20 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { BlogPost } from '@/lib/content'
+import type { BlogPostMeta } from '@/lib/supabase'
+
+type RelatedPost = BlogPostMeta & { similarity?: number }
 
 interface RelatedBlogPostsProps {
   currentSlug: string
   embedding?: number[]
   limit?: number
-}
-
-interface RelatedPost {
-  id: string
-  slug: string
-  title: string
-  summary: string
-  similarity: number
 }
 
 export function RelatedBlogPosts({
@@ -96,9 +90,11 @@ export function RelatedBlogPosts({
               {post.summary}
             </p>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">
-                {Math.round(post.similarity * 100)}% match
-              </span>
+              {post.similarity != null && (
+                <span className="text-xs text-gray-500">
+                  {Math.round(post.similarity * 100)}% match
+                </span>
+              )}
               <span className="text-blue-600 group-hover:translate-x-1 transition-transform">
                 →
               </span>

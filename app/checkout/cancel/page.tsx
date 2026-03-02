@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function CheckoutCancelPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-md rounded-lg border border-amber-200 bg-amber-50 p-8 text-center">
           <div className="mb-4 flex justify-center">

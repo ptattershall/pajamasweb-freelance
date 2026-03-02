@@ -24,15 +24,15 @@ export function getSupabase() {
 // Export a proxy that ensures the client is initialized
 // This allows us to use `supabase` throughout the codebase
 // but defer initialization until first use
-export const supabase: any = new Proxy(
+export const supabase = new Proxy(
   {},
   {
-    get: (target, prop) => {
+    get: (_target, prop) => {
       const client = getSupabase()
-      return (client as any)[prop]
+      return (client as unknown as Record<string | symbol, unknown>)[prop]
     },
   }
-)
+) as ReturnType<typeof createClient>
 
 // Types for metadata tables
 export interface BlogPostMeta {
@@ -61,7 +61,7 @@ export interface CaseStudyMeta {
 export async function upsertBlogPostMeta(post: BlogPostMeta) {
   const { data, error } = await supabase
     .from('blog_posts_meta')
-    .upsert(post, { onConflict: 'slug' })
+    .upsert(post as never, { onConflict: 'slug' })
     .select()
 
   if (error) {
@@ -120,7 +120,7 @@ export async function getBlogPostsByTag(tag: string) {
 export async function upsertCaseStudyMeta(study: CaseStudyMeta) {
   const { data, error } = await supabase
     .from('case_studies_meta')
-    .upsert(study, { onConflict: 'slug' })
+    .upsert(study as never, { onConflict: 'slug' })
     .select()
 
   if (error) {
@@ -263,7 +263,7 @@ export interface CaseStudyImage {
 export async function insertImageMetadata(image: ImageMetadata) {
   const { data, error } = await supabase
     .from('images')
-    .insert([image])
+    .insert([image] as never)
     .select()
 
   if (error) {
@@ -281,7 +281,7 @@ export async function associateImageWithBlogPost(
 ) {
   const { data, error } = await supabase
     .from('blog_post_images')
-    .insert([{ blog_post_slug: blogPostSlug, image_id: imageId, is_hero: isHero }])
+    .insert([{ blog_post_slug: blogPostSlug, image_id: imageId, is_hero: isHero }] as never)
     .select()
 
   if (error) {
@@ -299,7 +299,7 @@ export async function associateImageWithCaseStudy(
 ) {
   const { data, error } = await supabase
     .from('case_study_images')
-    .insert([{ case_study_slug: caseStudySlug, image_id: imageId, is_hero: isHero }])
+    .insert([{ case_study_slug: caseStudySlug, image_id: imageId, is_hero: isHero }] as never)
     .select()
 
   if (error) {
@@ -419,7 +419,7 @@ export async function findSimilarBlogPosts(embedding: number[], limit: number = 
   const { data, error } = await supabase.rpc('match_blog_posts', {
     query_embedding: embedding,
     match_count: limit,
-  })
+  } as never)
 
   if (error) {
     console.error('Error finding similar blog posts:', error)
@@ -433,7 +433,7 @@ export async function findSimilarCaseStudies(embedding: number[], limit: number 
   const { data, error } = await supabase.rpc('match_case_studies', {
     query_embedding: embedding,
     match_count: limit,
-  })
+  } as never)
 
   if (error) {
     console.error('Error finding similar case studies:', error)
@@ -447,7 +447,7 @@ export async function findSimilarCaseStudies(embedding: number[], limit: number 
 export async function updateBlogPostEmbedding(slug: string, embedding: number[]) {
   const { data, error } = await supabase
     .from('blog_posts_meta')
-    .update({ embedding })
+    .update({ embedding } as never)
     .eq('slug', slug)
     .select()
 
@@ -463,7 +463,7 @@ export async function updateBlogPostEmbedding(slug: string, embedding: number[])
 export async function updateCaseStudyEmbedding(slug: string, embedding: number[]) {
   const { data, error } = await supabase
     .from('case_studies_meta')
-    .update({ embedding })
+    .update({ embedding } as never)
     .eq('slug', slug)
     .select()
 
@@ -499,7 +499,7 @@ export interface Payment {
   currency?: string
   status?: string
   related_service?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   created_at?: string
   updated_at?: string
 }
@@ -522,7 +522,7 @@ export interface Subscription {
   trial_start?: string
   trial_end?: string
   related_service?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
   created_at?: string
   updated_at?: string
 }
@@ -575,7 +575,7 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
 export async function createService(service: Service) {
   const { data, error } = await supabase
     .from('services')
-    .insert([service])
+    .insert([service] as never)
     .select()
 
   if (error) {
@@ -589,7 +589,7 @@ export async function createService(service: Service) {
 export async function updateService(id: string, updates: Partial<Service>) {
   const { data, error } = await supabase
     .from('services')
-    .update(updates)
+    .update(updates as never)
     .eq('id', id)
     .select()
 
@@ -605,7 +605,7 @@ export async function updateService(id: string, updates: Partial<Service>) {
 export async function createPayment(payment: Payment) {
   const { data, error } = await supabase
     .from('payments')
-    .insert([payment])
+    .insert([payment] as never)
     .select()
 
   if (error) {
@@ -680,7 +680,7 @@ export async function getPaymentsByUserWithFilters(
       query = query.eq('status', options.status)
     }
 
-    if (options?.type && options.type !== 'all' as any) {
+    if (options?.type && (options.type as string) !== 'all') {
       query = query.eq('type', options.type)
     }
 
@@ -714,7 +714,7 @@ export async function getPaymentsByUserWithFilters(
 export async function updatePayment(id: string, updates: Partial<Payment>) {
   const { data, error } = await supabase
     .from('payments')
-    .update(updates)
+    .update(updates as never)
     .eq('id', id)
     .select()
 
@@ -729,7 +729,7 @@ export async function updatePayment(id: string, updates: Partial<Payment>) {
 export async function createSubscription(subscription: Omit<Subscription, 'id' | 'created_at' | 'updated_at'>) {
   const { data, error } = await supabase
     .from('subscriptions')
-    .insert([subscription])
+    .insert([subscription] as never)
     .select()
 
   if (error) {
@@ -793,9 +793,9 @@ export async function updateSubscription(
   const { data, error } = await supabase
     .from('subscriptions')
     .update({
-      ...updates,
+      ...(updates as Record<string, unknown | undefined>),
       updated_at: new Date().toISOString(),
-    })
+    } as never)
     .eq('stripe_subscription_id', stripeSubscriptionId)
     .select()
 
@@ -810,7 +810,7 @@ export async function updateSubscription(
 export async function upsertSubscription(subscription: Omit<Subscription, 'id' | 'created_at' | 'updated_at'>) {
   const { data, error } = await supabase
     .from('subscriptions')
-    .upsert(subscription, { onConflict: 'stripe_subscription_id' })
+    .upsert(subscription as never, { onConflict: 'stripe_subscription_id' })
     .select()
 
   if (error) {

@@ -52,7 +52,7 @@ export async function flagMessage(
   severity: 'low' | 'medium' | 'high' = 'medium',
   description?: string
 ): Promise<ModerationFlag> {
-  const { data, error } = await (getSupabaseClient() as any)
+  const { data, error } = await getSupabaseClient()
     .from('moderation_flags')
     .insert({
       message_id: messageId,
@@ -61,7 +61,7 @@ export async function flagMessage(
       severity,
       description,
       resolved: false,
-    })
+    } as never)
     .select()
     .single();
 
@@ -77,7 +77,7 @@ export async function flagMessage(
  * Get flags for a message
  */
 export async function getMessageFlags(messageId: string): Promise<ModerationFlag[]> {
-  const { data, error } = await (getSupabaseClient() as any)
+  const { data, error } = await getSupabaseClient()
     .from('moderation_flags')
     .select('*')
     .eq('message_id', messageId);
@@ -97,13 +97,13 @@ export async function resolveFlag(
   flagId: string,
   resolutionNotes?: string
 ): Promise<ModerationFlag> {
-  const { data, error } = await (getSupabaseClient() as any)
+  const { data, error } = await getSupabaseClient()
     .from('moderation_flags')
     .update({
       resolved: true,
       resolved_at: new Date().toISOString(),
       resolution_notes: resolutionNotes,
-    })
+    } as never)
     .eq('id', flagId)
     .select()
     .single();
@@ -122,7 +122,7 @@ export async function resolveFlag(
 export async function getUnresolvedFlags(
   limit: number = 50
 ): Promise<ModerationFlag[]> {
-  const { data, error } = await (getSupabaseClient() as any)
+  const { data, error } = await getSupabaseClient()
     .from('moderation_flags')
     .select('*')
     .eq('resolved', false)
@@ -142,8 +142,9 @@ export async function getUnresolvedFlags(
  * Calculate user risk score
  */
 export async function calculateUserRiskScore(userId: string): Promise<number> {
+  void userId; // Reserved for future user-scoped query
   // Get user's recent messages
-  const { data: messages, error: messagesError } = await (getSupabaseClient() as any)
+  const { data: messages, error: messagesError } = await getSupabaseClient()
     .from('chat_messages')
     .select('id, session_id')
     .eq('role', 'user')
@@ -155,10 +156,10 @@ export async function calculateUserRiskScore(userId: string): Promise<number> {
   }
 
   // Get flags for user's messages
-  const messageIds = (messages as any[])?.map((m) => m.id) || [];
+  const messageIds = (messages as { id: string }[])?.map((m) => m.id) || [];
   if (messageIds.length === 0) return 0;
 
-  const { data: flags, error: flagsError } = await (getSupabaseClient() as any)
+  const { data: flags, error: flagsError } = await getSupabaseClient()
     .from('moderation_flags')
     .select('severity')
     .in('message_id', messageIds);
@@ -170,7 +171,7 @@ export async function calculateUserRiskScore(userId: string): Promise<number> {
 
   // Calculate risk score
   let riskScore = 0;
-  (flags || []).forEach((flag: any) => {
+  (flags || []).forEach((flag: { severity: string }) => {
     if (flag.severity === 'high') riskScore += 30;
     else if (flag.severity === 'medium') riskScore += 15;
     else riskScore += 5;
@@ -191,7 +192,7 @@ export async function shouldRateLimit(userId: string): Promise<boolean> {
 
   // Check message frequency
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count, error } = await (getSupabaseClient() as any)
+  const { count, error } = await getSupabaseClient()
     .from('chat_messages')
     .select('*', { count: 'exact', head: true })
     .eq('role', 'user')
@@ -215,7 +216,7 @@ export async function getModerationStats(): Promise<{
   flagsByType: Record<string, number>;
   flagsBySeverity: Record<string, number>;
 }> {
-  const { data, error } = await (getSupabaseClient() as any)
+  const { data, error } = await getSupabaseClient()
     .from('moderation_flags')
     .select('flag_type, severity, resolved');
 
@@ -224,19 +225,20 @@ export async function getModerationStats(): Promise<{
     throw error;
   }
 
-  const flags = (data as any[]) || [];
+  type FlagRow = { resolved?: boolean; flag_type?: string; severity?: string };
+  const flags = (data as FlagRow[]) || [];
   const unresolvedFlags = flags.filter((f) => !f.resolved).length;
 
   // Count by type
   const flagsByType: Record<string, number> = {};
   flags.forEach((f) => {
-    flagsByType[f.flag_type] = (flagsByType[f.flag_type] || 0) + 1;
+    flagsByType[f.flag_type ?? ''] = (flagsByType[f.flag_type ?? ''] || 0) + 1;
   });
 
   // Count by severity
   const flagsBySeverity: Record<string, number> = {};
   flags.forEach((f) => {
-    flagsBySeverity[f.severity] = (flagsBySeverity[f.severity] || 0) + 1;
+    flagsBySeverity[f.severity ?? ''] = (flagsBySeverity[f.severity ?? ''] || 0) + 1;
   });
 
   return {

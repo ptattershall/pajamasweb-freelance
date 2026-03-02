@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
+import { formatTimeInTimezone } from '@/lib/timezone-utils'
 
 interface Booking {
   id: string
@@ -20,9 +21,19 @@ interface Booking {
 
 interface CalendarViewProps {
   bookings: Booking[]
+  /** Optional timezone for displaying booking times (e.g. from TimezoneSelector). */
+  timeZone?: string
 }
 
-export function CalendarView({ bookings }: CalendarViewProps) {
+export function CalendarView({ bookings, timeZone }: CalendarViewProps) {
+  const formatTime = (dateString: string) =>
+    timeZone
+      ? formatTimeInTimezone(dateString, timeZone)
+      : new Date(dateString).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        })
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const getDaysInMonth = (date: Date) => {
@@ -122,11 +133,7 @@ export function CalendarView({ bookings }: CalendarViewProps) {
                       >
                         <div className="font-medium truncate">{booking.title}</div>
                         <div className="text-[10px]">
-                          {new Date(booking.starts_at).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                          })}
+                          {formatTime(booking.starts_at)}
                         </div>
                       </div>
                     </Link>

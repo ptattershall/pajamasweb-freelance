@@ -17,7 +17,7 @@ export interface AuditLogEntry {
   action: string;
   resource_type: string;
   resource_id?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   status: 'success' | 'failure' | 'warning';
@@ -33,7 +33,7 @@ export async function logAudit(
   options?: {
     userId?: string;
     resourceId?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
     status?: 'success' | 'failure' | 'warning';
@@ -109,7 +109,7 @@ export async function logModerationAction(
   userId: string,
   flagId: string,
   action: string,
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 ): Promise<AuditLogEntry> {
   return logAudit('moderation_action', 'moderation_flag', {
     userId,
@@ -128,7 +128,7 @@ export async function logContentFilter(
   userId: string,
   messageId: string,
   filterType: string,
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 ): Promise<AuditLogEntry> {
   return logAudit('content_filtered', 'chat_message', {
     userId,

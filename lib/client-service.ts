@@ -27,15 +27,15 @@ function getSupabaseClient(): ReturnType<typeof createClient> {
   return supabaseClient
 }
 
-const supabase: any = new Proxy(
+const supabase = new Proxy(
   {},
   {
-    get: (target, prop) => {
+    get: (_target, prop) => {
       const client = getSupabaseClient()
-      return (client as any)[prop]
+      return (client as unknown as Record<string | symbol, unknown>)[prop]
     },
   }
-)
+) as ReturnType<typeof createClient>
 
 /**
  * Get all invoices for a client with Zod validation
@@ -54,7 +54,7 @@ export async function getClientInvoices(userId: string): Promise<Invoice[]> {
   }
 
   // Validate each invoice with Zod
-  return (data || []).map((item: any) => schemas.invoiceSchema.parse(item))
+  return (data || []).map((item: unknown) => schemas.invoiceSchema.parse(item))
 }
 
 /**
@@ -91,7 +91,7 @@ export async function getClientBookings(userId: string): Promise<Booking[]> {
   }
 
   // Validate each booking with Zod
-  return (data || []).map((item: any) => schemas.bookingSchema.parse(item))
+  return (data || []).map((item: unknown) => schemas.bookingSchema.parse(item))
 }
 
 /**
@@ -115,7 +115,7 @@ export async function getUpcomingBookings(userId: string): Promise<Booking[]> {
   }
 
   // Validate each booking with Zod
-  return (data || []).map((item: any) => schemas.bookingSchema.parse(item))
+  return (data || []).map((item: unknown) => schemas.bookingSchema.parse(item))
 }
 
 /**
@@ -154,7 +154,7 @@ export async function getClientDeliverables(userId: string): Promise<Deliverable
   }
 
   // Validate each deliverable with Zod
-  return (data || []).map((item: any) => schemas.deliverableSchema.parse(item))
+  return (data || []).map((item: unknown) => schemas.deliverableSchema.parse(item))
 }
 
 /**

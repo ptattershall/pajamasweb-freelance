@@ -8,25 +8,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
     const supabase = createServerSupabaseClient()
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can view revenue metrics' }, { status: 403 })
-    }
 
     const searchParams = request.nextUrl.searchParams
     const dateFrom = searchParams.get('dateFrom') || undefined

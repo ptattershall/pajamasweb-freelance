@@ -40,7 +40,7 @@ export default function BlogPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <main id="main-content" className="min-h-screen bg-white dark:bg-black">
       <JsonLdScript schema={breadcrumbSchema} />
       <ContentNavigation />
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
@@ -115,7 +115,7 @@ export default function BlogPage() {
 
       {/* Floating Chat Button */}
       <FloatingChatButton />
-    </div>
+    </main>
   )
 }
 

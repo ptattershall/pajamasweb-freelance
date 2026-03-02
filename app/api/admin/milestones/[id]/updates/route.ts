@@ -2,7 +2,7 @@
  * Admin Milestone Updates API Route
  */
 
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 import { milestoneUpdateSchema } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, rateLimiters, getRateLimitHeaders } from '@/lib/rate-limit'
@@ -14,11 +14,9 @@ export async function POST(
   try {
     const { id } = await params
 
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
     // Check rate limit (strict limit for admin operations)
     const { success, remaining, resetTime } = await checkRateLimit(user.id, rateLimiters.strict)
@@ -44,17 +42,6 @@ export async function POST(
     }
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can add updates' }, { status: 403 })
-    }
 
     const { update_text } = validation.data
 

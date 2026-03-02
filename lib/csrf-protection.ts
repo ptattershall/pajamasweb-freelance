@@ -4,7 +4,7 @@
  * Edge Runtime compatible
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 const CSRF_TOKEN_LENGTH = 32;
 const CSRF_HEADER_NAME = 'x-csrf-token';

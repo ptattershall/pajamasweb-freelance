@@ -25,15 +25,15 @@ function getSupabaseClient(): ReturnType<typeof createClient> {
   return supabaseClient
 }
 
-const supabase: any = new Proxy(
+const supabase = new Proxy(
   {},
   {
-    get: (target, prop) => {
+    get: (_target, prop) => {
       const client = getSupabaseClient()
-      return (client as any)[prop]
+      return (client as unknown as Record<string | symbol, unknown>)[prop]
     },
   }
-)
+) as ReturnType<typeof createClient>
 
 /**
  * @deprecated Use CreateBookingInput from validation-schemas instead
@@ -79,7 +79,7 @@ export async function createBooking(data: CreateBookingInput | BookingData): Pro
 
     const { data: booking, error } = await supabase
       .from('bookings')
-      .insert([validated])
+      .insert([validated] as never)
       .select()
       .single()
 
@@ -140,7 +140,7 @@ export async function updateBooking(
         ...validated,
         status: 'rescheduled',
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq('external_id', externalId)
       .select()
       .single()
@@ -180,7 +180,7 @@ export async function cancelBooking(externalId: string): Promise<Booking> {
       .update({
         status: 'cancelled',
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq('external_id', externalId)
       .select()
       .single()
@@ -246,7 +246,7 @@ async function logBookingHistory(
         previous_status: oldValues?.status || null,
         new_status: newValues.status,
         changed_by: newValues.id, // Using booking ID as changed_by for now
-      })
+      } as never)
   } catch (error) {
     console.error('Error logging booking history:', error)
     // Don't throw - this is non-critical

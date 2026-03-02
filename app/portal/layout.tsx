@@ -6,10 +6,10 @@
 
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut, Home, FileText, Calendar, Package, Milestone, MessageSquare, User, BarChart3, CreditCard, Repeat } from 'lucide-react'
+import { LogOut, Home, FileText, Calendar, Package, Milestone, MessageSquare, User, BarChart3, CreditCard, Repeat, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 
@@ -17,8 +17,26 @@ interface PortalLayoutProps {
   children: ReactNode
 }
 
+type PortalRole = 'OWNER' | 'CLIENT' | 'SALES' | 'DEV'
+
 export default function PortalLayout({ children }: PortalLayoutProps) {
   const router = useRouter()
+  const [role, setRole] = useState<PortalRole | null>(null)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/portal/profile')
+        if (res.ok) {
+          const data = await res.json()
+          setRole(data?.role ?? null)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchProfile()
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -48,11 +66,14 @@ export default function PortalLayout({ children }: PortalLayoutProps) {
 
         <nav className="mt-8 px-4 space-y-2">
           <NavLink href="/portal" icon={<Home size={20} />} label="Dashboard" />
+          {(role === 'SALES' || role === 'DEV') && (
+            <NavLink href="/portal/assigned-clients" icon={<Users size={20} />} label="Assigned Clients" />
+          )}
           <NavLink href="/portal/projects" icon={<Milestone size={20} />} label="Projects" />
           <NavLink href="/portal/invoices" icon={<FileText size={20} />} label="Invoices" />
           <NavLink href="/portal/payments" icon={<CreditCard size={20} />} label="Payments" />
           <NavLink href="/portal/subscriptions" icon={<Repeat size={20} />} label="Subscriptions" />
-          <NavLink href="/portal/bookings" icon={<Calendar size={20} />} label="Bookings" />
+          <NavLink href="/portal/bookings" icon={<Calendar size={20} />} label={role === 'SALES' || role === 'DEV' ? 'My Bookings' : 'Bookings'} />
           <NavLink href="/portal/deliverables" icon={<Package size={20} />} label="Deliverables" />
           <NavLink href="/portal/contracts" icon={<FileText size={20} />} label="Contracts" />
           <NavLink href="/portal/milestones" icon={<Milestone size={20} />} label="Milestones" />
@@ -74,7 +95,7 @@ export default function PortalLayout({ children }: PortalLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main id="main-content" className="flex-1 overflow-auto">
         <div className="p-8">
           {children}
         </div>

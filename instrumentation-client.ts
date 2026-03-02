@@ -5,28 +5,18 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: "https://984df65f4be33969053b7fee0c5d742d@o4509618162630656.ingest.us.sentry.io/4509618171412480",
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN || "https://984df65f4be33969053b7fee0c5d742d@o4509618162630656.ingest.us.sentry.io/4509618171412480",
 
-  // Add optional integrations for additional features
   integrations: [
     Sentry.replayIntegration(),
   ],
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  // Enable logs to be sent to Sentry
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1,
   enableLogs: true,
 
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
   replaysSessionSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled when an error occurs.
   replaysOnErrorSampleRate: 1.0,
 
-  // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
 });
 

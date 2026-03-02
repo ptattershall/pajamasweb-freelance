@@ -26,8 +26,8 @@ export interface ChatMessage {
   session_id: string;
   role: 'user' | 'assistant';
   content: string;
-  tool_calls?: Record<string, any>;
-  tool_results?: Record<string, any>;
+  tool_calls?: Record<string, unknown>;
+  tool_results?: Record<string, unknown>;
   confidence_score?: number;
   created_at: string;
 }
@@ -145,8 +145,8 @@ export async function saveChatMessage(
   sessionId: string,
   role: 'user' | 'assistant',
   content: string,
-  toolCalls?: Record<string, any>,
-  toolResults?: Record<string, any>,
+  toolCalls?: Record<string, unknown>,
+  toolResults?: Record<string, unknown>,
   confidenceScore?: number
 ): Promise<ChatMessage> {
   const { data, error } = await supabase

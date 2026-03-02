@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthenticatedUser, createServerSupabaseClient, generateInvitationToken } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient, generateInvitationToken } from '@/lib/auth-service'
 import { sendInvitationEmail } from '@/lib/email-service'
 
 const resendInvitationSchema = z.object({
@@ -35,25 +35,11 @@ export async function POST(
 
     const { expiresInDays } = validation.data
 
-    // Get authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can resend invitations' }, { status: 403 })
-    }
 
     // Get the invitation
     const { data: invitation, error: getError } = await supabase

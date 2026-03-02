@@ -89,7 +89,7 @@ export function ServiceFilterGrid({ services }: ServiceFilterGridProps) {
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-slate-400 hover:text-slate-600"
                 aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function ServiceFilterGrid({ services }: ServiceFilterGridProps) {
           <button
             type="button"
             onClick={handleClearFilters}
-            className="text-sm text-slate-600 underline hover:text-slate-900"
+            className="min-h-[44px] px-2 py-2 text-sm text-slate-600 underline hover:text-slate-900"
             aria-label="Clear all filters"
           >
             Clear filters
@@ -138,7 +138,7 @@ export function ServiceFilterGrid({ services }: ServiceFilterGridProps) {
           {searchQuery && (
             <span>
               {' '}
-              matching "<span className="font-medium">{searchQuery}</span>"
+              matching &quot;<span className="font-medium">{searchQuery}</span>&quot;
             </span>
           )}
           {tierFilter !== 'all' && (
@@ -185,7 +185,7 @@ export function ServiceFilterGrid({ services }: ServiceFilterGridProps) {
 
             <p className="mb-6 text-slate-600">{service.summary}</p>
 
-            <div className="inline-block rounded bg-blue-600 px-4 py-2 font-semibold text-white transition-colors group-hover:bg-blue-700">
+            <div className="inline-flex min-h-[44px] items-center rounded bg-blue-600 px-4 py-2 font-semibold text-white transition-colors group-hover:bg-blue-700">
               View Details →
             </div>
           </Link>
@@ -201,7 +201,7 @@ export function ServiceFilterGrid({ services }: ServiceFilterGridProps) {
           <button
             type="button"
             onClick={handleClearFilters}
-            className="text-blue-600 underline hover:text-blue-700"
+            className="min-h-[44px] py-2 text-blue-600 underline hover:text-blue-700"
           >
             Clear filters
           </button>

@@ -10,6 +10,9 @@ import {
   sendBookingConfirmation,
   sendBookingCancellation
 } from '@/lib/email-service';
+import { getActiveAssignment } from '@/lib/assignment-service';
+import { assignClientToSales } from '@/lib/rotation-service';
+import { createServerSupabaseClient } from '@/lib/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,8 +50,8 @@ export async function POST(request: NextRequest) {
     switch (calcomPayload.triggerEvent) {
       case 'BOOKING_CREATED': {
         // Check if booking already exists
-        const existing = await getBookingByExternalId(bookingDetails.externalId);
-        if (existing) {
+        const existingBooking = await getBookingByExternalId(bookingDetails.externalId);
+        if (existingBooking) {
           console.log('Booking already exists:', bookingDetails.externalId);
           return NextResponse.json({ success: true });
         }
@@ -65,6 +68,20 @@ export async function POST(request: NextRequest) {
           attendeeName: bookingDetails.attendeeName,
           status: 'confirmed'
         });
+
+        // Assign SALES via rotation if not already assigned; set booking.assigned_user_id
+        let assignedUserId: string | null = null;
+        const existing = await getActiveAssignment(userId, 'SALES');
+        if (existing) {
+          assignedUserId = existing.assigned_user_id;
+        } else {
+          const result = await assignClientToSales(userId);
+          if (result.assignment) assignedUserId = result.assignment.assigned_user_id;
+        }
+        if (assignedUserId) {
+          const supabase = createServerSupabaseClient();
+          await supabase.from('bookings').update({ assigned_user_id: assignedUserId }).eq('id', booking.id);
+        }
 
         // Send confirmation email
         try {

@@ -9,42 +9,22 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthenticatedUser } from '@/lib/auth-service'
-import { createInvitation } from '@/lib/auth-service'
-import { createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createInvitation, createServerSupabaseClient } from '@/lib/auth-service'
 import { sendInvitationEmail } from '@/lib/email-service'
 
 const createInvitationSchema = z.object({
   email: z.string().email('Invalid email address'),
   expiresInDays: z.number().int().min(1).max(30).default(7),
+  role: z.enum(['CLIENT', 'SALES', 'DEV']).default('CLIENT'),
 })
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request)
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Verify user is OWNER
     const supabase = createServerSupabaseClient()
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json(
-        { error: 'Only admins can create invitations' },
-        { status: 403 }
-      )
-    }
 
     // Validate request body
     const body = await request.json()
@@ -57,7 +37,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, expiresInDays } = validation.data
+    const { email, expiresInDays, role } = validation.data
 
     // Check if invitation already exists for this email
     const { data: existingInvitation } = await supabase
@@ -92,7 +72,8 @@ export async function POST(request: NextRequest) {
     const { invitation, token, success } = await createInvitation(
       email,
       user.id,
-      expiresInDays
+      expiresInDays,
+      role
     )
 
     if (!success) {
@@ -114,6 +95,7 @@ export async function POST(request: NextRequest) {
         invitation: {
           id: invitation.id,
           email: invitation.email,
+          role: invitation.role ?? 'CLIENT',
           status: invitation.status,
           expiresAt: invitation.expires_at,
         },

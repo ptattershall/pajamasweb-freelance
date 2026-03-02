@@ -10,7 +10,7 @@ export interface EmbeddingRecord {
   id: number
   content: string
   embedding: number[]
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   source: string
   type: 'service' | 'faq' | 'blog' | 'case_study'
   created_at: string
@@ -25,7 +25,7 @@ export async function storeEmbedding(
   embedding: number[],
   type: 'service' | 'faq' | 'blog' | 'case_study',
   source: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ) {
   const { data, error } = await supabase
     .from('embeddings')
@@ -110,7 +110,7 @@ export async function batchStoreEmbeddings(
     embedding: number[]
     type: 'service' | 'faq' | 'blog' | 'case_study'
     source: string
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   }>
 ) {
   const { data, error } = await supabase

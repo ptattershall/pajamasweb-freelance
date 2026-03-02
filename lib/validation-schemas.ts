@@ -138,9 +138,17 @@ export const createNotificationSchema = z.object({
 // DATABASE SCHEMAS - PROFILES
 // ============================================================================
 
+/** Application roles: OWNER (admin), CLIENT, SALES (contractor), DEV (developer contractor) */
+export const profileRoleEnum = z.enum(['OWNER', 'CLIENT', 'SALES', 'DEV'])
+export type ProfileRole = z.infer<typeof profileRoleEnum>
+
+/** Roles that can be assigned via invitation (not OWNER) */
+export const invitationRoleEnum = z.enum(['CLIENT', 'SALES', 'DEV'])
+export type InvitationRole = z.infer<typeof invitationRoleEnum>
+
 export const profileSchema = z.object({
   user_id: z.string().uuid(),
-  role: z.enum(['OWNER', 'CLIENT']),
+  role: profileRoleEnum,
   display_name: z.string().nullable(),
   company: z.string().nullable(),
   avatar_url: z.string().url().nullable(),
@@ -151,12 +159,42 @@ export const profileSchema = z.object({
 
 export const createProfileSchema = z.object({
   user_id: z.string().uuid('Invalid user ID'),
-  role: z.enum(['OWNER', 'CLIENT']).default('CLIENT'),
+  role: profileRoleEnum.default('CLIENT'),
   display_name: z.string().min(1, 'Display name is required').max(255),
   company: z.string().max(255).optional(),
 })
 
 export const updateProfileSchema = createProfileSchema.partial()
+
+// ============================================================================
+// DATABASE SCHEMAS - CLIENT ASSIGNMENTS
+// ============================================================================
+
+export const assignmentRoleTypeEnum = z.enum(['SALES', 'DEV'])
+export const assignmentStatusEnum = z.enum(['ACTIVE', 'ENDED'])
+
+export const clientAssignmentSchema = z.object({
+  id: z.string().uuid(),
+  client_id: z.string().uuid(),
+  assigned_user_id: z.string().uuid(),
+  role_type: assignmentRoleTypeEnum,
+  status: assignmentStatusEnum,
+  started_at: z.string().datetime(),
+  ended_at: z.string().datetime().nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
+
+export const createClientAssignmentSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID'),
+  assigned_user_id: z.string().uuid('Invalid assigned user ID'),
+  role_type: assignmentRoleTypeEnum,
+})
+
+export const updateClientAssignmentSchema = z.object({
+  status: assignmentStatusEnum.optional(),
+  ended_at: z.string().datetime().nullable().optional(),
+})
 
 // ============================================================================
 // DATABASE SCHEMAS - BOOKINGS
@@ -165,6 +203,7 @@ export const updateProfileSchema = createProfileSchema.partial()
 export const bookingSchema = z.object({
   id: z.string().uuid(),
   client_id: z.string().uuid(),
+  assigned_user_id: z.string().uuid().nullable().optional(),
   title: z.string(),
   description: z.string().nullable(),
   starts_at: z.string().datetime(),
@@ -183,6 +222,7 @@ export const bookingSchema = z.object({
 
 export const createBookingSchema = z.object({
   client_id: z.string().uuid('Invalid client ID'),
+  assigned_user_id: z.string().uuid().optional().nullable(),
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().optional(),
   starts_at: z.string().datetime('Invalid start time'),
@@ -242,7 +282,7 @@ export const createPaymentIntentSchema = z.object({
   userEmail: z.string().email('Valid email is required'),
   userName: z.string().optional(),
   description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 }).refine(
   (data) => data.serviceSlug || data.amountCents,
   { message: 'Either serviceSlug or amountCents is required' }
@@ -269,7 +309,7 @@ export const paymentSchema = z.object({
   currency: z.string().default('usd'),
   status: z.string(),
   related_service: z.string().uuid().nullable(),
-  metadata: z.record(z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.string()).nullable(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 })
@@ -282,7 +322,7 @@ export const createPaymentSchema = z.object({
   currency: z.string().default('usd'),
   status: z.string().default('pending'),
   related_service: z.string().uuid('Invalid service ID').optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 })
 
 // ============================================================================
@@ -420,6 +460,11 @@ export type CreateNotificationInput = z.infer<typeof createNotificationSchema>
 export type Profile = z.infer<typeof profileSchema>
 export type CreateProfileInput = z.infer<typeof createProfileSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+
+// Client assignment types
+export type ClientAssignment = z.infer<typeof clientAssignmentSchema>
+export type CreateClientAssignmentInput = z.infer<typeof createClientAssignmentSchema>
+export type UpdateClientAssignmentInput = z.infer<typeof updateClientAssignmentSchema>
 
 // Booking types
 export type Booking = z.infer<typeof bookingSchema>

@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { getAuthenticatedUser } from '@/lib/auth-service'
+import { getProfileForRequest } from '@/lib/auth-service'
+
+type BookingForICS = {
+  id: string
+  starts_at: string
+  ends_at: string
+  title: string
+  description?: string | null
+  location?: string | null
+  meeting_link?: string | null
+  status: string
+}
 
 /**
  * Generate ICS file for a booking
@@ -11,10 +22,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    // Get authenticated user from session
-    const { user, error: authError } = await getAuthenticatedUser(request)
+    const { user, profile, error: authError } = await getProfileForRequest(request)
 
-    if (authError || !user) {
+    if (authError || !user || !profile) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -23,13 +33,13 @@ export async function GET(
 
     const supabase = createServerSupabaseClient()
 
-    // Fetch the booking
-    const { data: booking, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('id', id)
-      .eq('client_id', user.id)
-      .single()
+    let query = supabase.from('bookings').select('*').eq('id', id)
+    if (profile.role === 'CLIENT') {
+      query = query.eq('client_id', user.id)
+    } else if (profile.role === 'SALES' || profile.role === 'DEV') {
+      query = query.eq('assigned_user_id', user.id)
+    }
+    const { data: booking, error } = await query.single()
 
     if (error || !booking) {
       return NextResponse.json(
@@ -60,7 +70,7 @@ export async function GET(
 /**
  * Generate ICS file content
  */
-function generateICS(booking: any): string {
+function generateICS(booking: BookingForICS): string {
   const formatICSDate = (date: string) => {
     return new Date(date)
       .toISOString()
@@ -80,7 +90,7 @@ function generateICS(booking: any): string {
   const start = formatICSDate(booking.starts_at)
   const end = formatICSDate(booking.ends_at)
 
-  let icsContent = [
+  const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//PajamasWeb//Booking Calendar//EN',

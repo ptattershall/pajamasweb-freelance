@@ -6,12 +6,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Calendar, MapPin, Video, Clock, X, List, CalendarDays } from 'lucide-react'
+import { Calendar, MapPin, Video, Clock, List, CalendarDays } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { CalendarView } from '@/components/calendar-view'
+import { TimezoneSelector } from '@/components/TimezoneSelector'
+import {
+  getStoredTimezone,
+  formatDateInTimezone,
+  formatTimeInTimezone,
+} from '@/lib/timezone-utils'
 
 interface Booking {
   id: string
@@ -29,6 +34,13 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [timeZone, setTimeZone] = useState<string>(() =>
+    typeof window !== 'undefined' ? getStoredTimezone() : 'UTC'
+  )
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') setTimeZone(getStoredTimezone())
+  }, [])
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -48,21 +60,11 @@ export default function BookingsPage() {
     fetchBookings()
   }, [tab])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
+  const formatDate = (dateString: string) =>
+    formatDateInTimezone(dateString, timeZone)
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
+  const formatTime = (dateString: string) =>
+    formatTimeInTimezone(dateString, timeZone)
 
   const getDuration = (start: string, end: string) => {
     const startDate = new Date(start)
@@ -73,8 +75,15 @@ export default function BookingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold">Bookings</h1>
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4">
+          <h1 className="text-4xl font-bold">Bookings</h1>
+          <TimezoneSelector
+            showLabel
+            onTimezoneChange={setTimeZone}
+            className="shrink-0"
+          />
+        </div>
         <div className="flex gap-2">
           <div className="flex gap-2 mr-4">
             <Button
@@ -101,7 +110,7 @@ export default function BookingsPage() {
       </div>
 
       {viewMode === 'calendar' ? (
-        <CalendarView bookings={bookings} />
+        <CalendarView bookings={bookings} timeZone={timeZone} />
       ) : (
         <>
           {/* Tabs */}

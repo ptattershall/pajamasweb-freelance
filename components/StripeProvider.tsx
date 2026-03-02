@@ -18,8 +18,6 @@ interface StripeProviderProps {
 export function StripeProvider({
   children,
   clientSecret,
-  amount,
-  currency = 'usd',
 }: StripeProviderProps) {
   const options = {
     clientSecret,

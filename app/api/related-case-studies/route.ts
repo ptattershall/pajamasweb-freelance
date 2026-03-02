@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { findSimilarCaseStudies } from '@/lib/supabase'
+import { findSimilarCaseStudies, type CaseStudyMeta } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Filter out the current study
     const relatedStudies = similarStudies
-      .filter((study: any) => study.slug !== currentSlug)
+      .filter((study: CaseStudyMeta) => study.slug !== currentSlug)
       .slice(0, limit)
 
     return NextResponse.json({

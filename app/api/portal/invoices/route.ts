@@ -4,6 +4,7 @@
 
 import { getAuthenticatedUser, getUserProfile } from '@/lib/auth-service'
 import { getClientInvoices, getInvoicesByStatus, getOverdueInvoices } from '@/lib/invoices-service'
+import type { Invoice } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (status === 'overdue') {
       invoices = await getOverdueInvoices(user.id)
     } else if (status && status !== 'all') {
-      invoices = await getInvoicesByStatus(user.id, status as any)
+      invoices = await getInvoicesByStatus(user.id, status as Invoice['status'])
     } else {
       invoices = await getClientInvoices(user.id)
     }

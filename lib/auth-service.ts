@@ -6,10 +6,13 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+
+import type { ProfileRole } from './validation-schemas'
 
 export interface UserProfile {
   user_id: string
-  role: 'OWNER' | 'CLIENT'
+  role: ProfileRole
   display_name: string | null
   company: string | null
   avatar_url: string | null
@@ -62,7 +65,7 @@ export async function signUp(data: SignUpData) {
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/signin`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
         data: {
           display_name: data.display_name,
           company: data.company || null,
@@ -203,7 +206,7 @@ export async function resendVerificationEmail(email: string) {
     type: 'signup',
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/signin`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
   })
 
@@ -302,9 +305,66 @@ export async function getAuthenticatedUser(request: Request) {
     }
 
     return { user, error: null }
-  } catch (error) {
+  } catch {
     return { user: null, error: 'Failed to authenticate' }
   }
+}
+
+/**
+ * Get authenticated user and their profile from request (for API routes).
+ */
+export async function getProfileForRequest(request: Request): Promise<{
+  user: { id: string; email?: string } | null
+  profile: UserProfile | null
+  error: string | null
+}> {
+  const { user, error: authError } = await getAuthenticatedUser(request)
+  if (authError || !user) {
+    return { user: null, profile: null, error: authError ?? 'No session found' }
+  }
+  const profile = await getUserProfile(user.id)
+  return { user, profile, error: null }
+}
+
+/** Result of requireOwner: either success with user/profile or error Response */
+export type RequireOwnerResult =
+  | { ok: true; user: { id: string; email?: string }; profile: UserProfile }
+  | { ok: false; error: NextResponse }
+
+/**
+ * Require OWNER role for admin routes. Returns 403 if not owner or unauthenticated.
+ */
+export async function requireOwner(request: Request): Promise<RequireOwnerResult> {
+  const { user, profile, error } = await getProfileForRequest(request)
+  if (error || !user) {
+    return { ok: false, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+  if (!profile || profile.role !== 'OWNER') {
+    return { ok: false, error: NextResponse.json({ error: 'Only admins can perform this action' }, { status: 403 }) }
+  }
+  return { ok: true, user, profile }
+}
+
+/** Result of requireRole: either success with user/profile or error Response */
+export type RequireRoleResult =
+  | { ok: true; user: { id: string; email?: string }; profile: UserProfile }
+  | { ok: false; error: NextResponse }
+
+/**
+ * Require one of the given roles. Returns 401/403 if not in allowed roles or unauthenticated.
+ */
+export async function requireRole(
+  request: Request,
+  allowedRoles: ProfileRole[]
+): Promise<RequireRoleResult> {
+  const { user, profile, error } = await getProfileForRequest(request)
+  if (error || !user) {
+    return { ok: false, error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+  if (!profile || !allowedRoles.includes(profile.role)) {
+    return { ok: false, error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+  }
+  return { ok: true, user, profile }
 }
 
 /**
@@ -334,13 +394,17 @@ export function generateInvitationToken(): string {
   return token
 }
 
+/** Role to assign when the invitation is accepted (default CLIENT) */
+export type InvitationRoleType = 'CLIENT' | 'SALES' | 'DEV'
+
 /**
- * Create an invitation for a client
+ * Create an invitation for a client, sales, or dev
  */
 export async function createInvitation(
   email: string,
   createdBy: string,
-  expiresInDays: number = 7
+  expiresInDays: number = 7,
+  role: InvitationRoleType = 'CLIENT'
 ) {
   const supabase = createServerSupabaseClient()
   const token = generateInvitationToken()
@@ -356,6 +420,7 @@ export async function createInvitation(
         created_by: createdBy,
         expires_at: expiresAt.toISOString(),
         status: 'pending',
+        role,
       })
       .select()
       .single()
@@ -403,13 +468,14 @@ export async function validateInvitation(token: string) {
     }
 
     return { valid: true, invitation: data, error: null }
-  } catch (error) {
+  } catch {
     return { valid: false, error: 'Failed to validate invitation' }
   }
 }
 
 /**
  * Accept an invitation and create a user account
+ * Profile role is taken from invitation.role (CLIENT, SALES, DEV) or defaults to CLIENT.
  */
 export async function acceptInvitation(
   token: string,
@@ -427,6 +493,10 @@ export async function acceptInvitation(
     }
 
     const invitation = validation.invitation
+    const invitationRole = (invitation.role as InvitationRoleType) || 'CLIENT'
+    const profileRole = invitationRole === 'CLIENT' || invitationRole === 'SALES' || invitationRole === 'DEV'
+      ? invitationRole
+      : 'CLIENT'
 
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -439,14 +509,14 @@ export async function acceptInvitation(
       throw new Error(authError?.message || 'Failed to create user')
     }
 
-    // Create profile
+    // Create profile with role from invitation
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         user_id: authData.user.id,
         display_name: displayName,
         company: company || null,
-        role: 'CLIENT',
+        role: profileRole,
         email_verified: true,
         invited_by: invitation.created_by,
         invitation_accepted_at: new Date().toISOString(),

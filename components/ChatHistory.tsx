@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trash2, MessageSquare } from 'lucide-react';
 import type { ChatSession } from '@/lib/chat-history';
 
@@ -15,13 +15,7 @@ export default function ChatHistory({ userId, onSelectSession, isOpen }: ChatHis
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen && userId) {
-      loadSessions();
-    }
-  }, [isOpen, userId]);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     if (!userId) return;
 
     setLoading(true);
@@ -39,7 +33,13 @@ export default function ChatHistory({ userId, onSelectSession, isOpen }: ChatHis
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (isOpen && userId) {
+      loadSessions();
+    }
+  }, [isOpen, userId, loadSessions]);
 
   const handleDeleteSession = async (sessionId: string) => {
     if (!confirm('Delete this chat? This action cannot be undone.')) return;

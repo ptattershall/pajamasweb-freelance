@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import Link from 'next/link';
+import { TimezoneSelector } from '@/components/TimezoneSelector';
+import { getStoredTimezone } from '@/lib/timezone-utils';
 
 export default function BookingPage() {
-  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeZone, setTimeZone] = useState<string>('UTC');
+  const [calReady, setCalReady] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/token');
@@ -32,19 +33,21 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
-    // Initialize Cal.com embed only if authenticated
+    if (typeof window !== 'undefined') {
+      setTimeZone(getStoredTimezone());
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
     (window as any).Cal?.("init", {
       origin: "https://cal.com"
     });
 
-    // Set up event listeners
     (window as any).Cal?.("on", {
       action: "bookingSuccessful",
       callback: (e: any) => {
-        console.log('Booking successful:', e.detail);
-        // Show success message
         const successDiv = document.getElementById('booking-success');
         if (successDiv) {
           successDiv.style.display = 'block';
@@ -58,8 +61,6 @@ export default function BookingPage() {
     (window as any).Cal?.("on", {
       action: "bookingFailed",
       callback: (e: any) => {
-        console.error('Booking failed:', e.detail);
-        // Show error message
         const errorDiv = document.getElementById('booking-error');
         if (errorDiv) {
           errorDiv.style.display = 'block';
@@ -70,6 +71,21 @@ export default function BookingPage() {
       }
     });
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !calReady || typeof (window as any).Cal === 'undefined') return;
+
+    (window as any).Cal("inline", {
+      elementOrSelector: "[data-testid='cal-embed']",
+      calLink: process.env.NEXT_PUBLIC_CALCOM_LINK || "your-username/intro-call",
+      config: {
+        theme: "light",
+        layout: "month_view",
+        timeZone,
+        timeZones: [timeZone],
+      },
+    });
+  }, [isAuthenticated, timeZone, calReady]);
 
   // Show loading state
   if (isLoading) {
@@ -125,16 +141,22 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-12 px-4">
+    <main id="main-content" className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
             Book a Meeting
           </h1>
-          <p className="text-xl text-slate-300">
+          <p className="text-xl text-slate-300 mb-4">
             Schedule a call with our team to discuss your project
           </p>
+          <div className="flex justify-center text-slate-200">
+            <TimezoneSelector
+              showLabel
+              onTimezoneChange={(tz) => setTimeZone(tz)}
+            />
+          </div>
         </div>
 
         {/* Success Message */}
@@ -201,23 +223,13 @@ export default function BookingPage() {
         </div>
       </div>
 
-      {/* Cal.com Script */}
+      {/* Cal.com Script - init only; inline embed is rendered in useEffect when timeZone/isAuthenticated/calReady are set */}
       <Script
         src="https://cdn.cal.com/cal.js"
         strategy="afterInteractive"
-        onLoad={() => {
-          // Initialize Cal.com embed after script loads
-          (window as any).Cal?.("inline", {
-            elementOrSelector: "[data-testid='cal-embed']",
-            calLink: process.env.NEXT_PUBLIC_CALCOM_LINK || "your-username/intro-call",
-            config: {
-              theme: "light",
-              layout: "month_view"
-            }
-          });
-        }}
+        onLoad={() => setCalReady(true)}
       />
-    </div>
+    </main>
   );
 }
 

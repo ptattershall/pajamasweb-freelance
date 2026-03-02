@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 import { getInvoiceById, getClientEmail } from '@/lib/invoices-service'
 import { retrieveInvoice } from '@/lib/stripe'
 import { sendInvoicePaymentReminder } from '@/lib/email-service'
@@ -20,24 +20,8 @@ const remindBodySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const supabase = createServerSupabaseClient()
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json(
-        { error: 'Only admins can send invoice reminders' },
-        { status: 403 }
-      )
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
     const body = await request.json()
     const validation = remindBodySchema.safeParse(body)

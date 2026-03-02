@@ -122,7 +122,7 @@ export default function ClientsPage() {
             </div>
             <div>
               <label className="text-sm font-medium">Status</label>
-              <Select value={status} onValueChange={(value: any) => {
+              <Select value={status} onValueChange={(value: 'all' | 'active' | 'pending') => {
                 setStatus(value)
                 setPage(0)
               }}>

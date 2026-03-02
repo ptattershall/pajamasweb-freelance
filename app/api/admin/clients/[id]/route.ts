@@ -8,7 +8,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+
+type AuthUserRef = { email?: string }
+type AuthUsersRelation = AuthUserRef | AuthUserRef[]
+
+type InvitationRow = {
+  id: string
+  email: string
+  status: string
+  created_at: string | null
+  expires_at: string | null
+  accepted_at: string | null
+  created_by: string | null
+}
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 
 export async function GET(
   request: NextRequest,
@@ -17,25 +30,10 @@ export async function GET(
   try {
     const { id } = await params
 
-    // Get authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can view client details' }, { status: 403 })
-    }
 
     // Get client profile
     const { data: client, error: clientError } = await supabase
@@ -58,8 +56,8 @@ export async function GET(
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
     }
 
-    // Get invitations for this client
-    const authUsers = client.auth_users as any
+    // Get invitations for this client (auth_users is relation from user_id(email) – object or array)
+    const authUsers = client.auth_users as AuthUsersRelation | null
     const clientEmail = Array.isArray(authUsers) ? authUsers[0]?.email : authUsers?.email
     const { data: invitations, error: invError } = await supabase
       .from('invitations')
@@ -92,7 +90,7 @@ export async function GET(
         acceptedAt: client.invitation_accepted_at,
         invitedBy: client.invited_by,
       },
-      invitations: invitations?.map((inv: any) => ({
+      invitations: invitations?.map((inv: InvitationRow) => ({
         id: inv.id,
         email: inv.email,
         status: inv.status,

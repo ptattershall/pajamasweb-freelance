@@ -19,6 +19,20 @@ import {
   retrieveInvoice,
 } from './stripe'
 
+/**
+ * Shape of Stripe Invoice when expanded (charge, etc.) for type-safe access.
+ * Avoids conflict with validation-schemas Invoice and satisfies strict typing.
+ */
+interface StripeInvoiceExpanded {
+  charge?: string | Stripe.Charge | null
+  number?: string | null
+  customer_email?: string | null
+  subtotal?: number | null
+  tax?: number | null
+  total?: number | null
+  lines?: { data?: Array<{ description?: string | null; amount: number; quantity?: number; price?: string | Stripe.Price }> }
+}
+
 export interface CreateInvoiceParams {
   clientId: string
   amountCents: number
@@ -318,8 +332,6 @@ export async function listAllOverdueInvoices(): Promise<Invoice[]> {
  * Get invoice with payment history from Stripe
  */
 export async function getInvoiceWithPaymentHistory(invoiceId: string, clientId: string) {
-  const supabase = createServerSupabaseClient()
-
   // Get invoice from database
   const invoice = await getInvoice(invoiceId, clientId)
   if (!invoice || !invoice.stripe_invoice_id) {
@@ -328,16 +340,25 @@ export async function getInvoiceWithPaymentHistory(invoiceId: string, clientId: 
 
   try {
     // Fetch full invoice details from Stripe
-    const stripeInvoice = await retrieveInvoice(invoice.stripe_invoice_id!, [
+    const stripeInvoiceRaw = await retrieveInvoice(invoice.stripe_invoice_id!, [
       'charge',
       'payment_intent',
       'payment_intent.charges',
     ])
+    const stripeInvoice = stripeInvoiceRaw as StripeInvoiceExpanded
 
     // Get payment history (charges associated with this invoice)
-    const paymentHistory = []
+    const paymentHistory: Array<{
+      id: string
+      amount: number
+      currency: string
+      status: string
+      created: number
+      payment_method_details: Stripe.Charge['payment_method_details']
+      receipt_url: string | null
+    }> = []
 
-    const chargeId = (stripeInvoice as any).charge;
+    const chargeId = stripeInvoice.charge;
     if (chargeId) {
       const charge = typeof chargeId === 'string'
         ? await stripe.charges.retrieve(chargeId)
@@ -354,22 +375,21 @@ export async function getInvoiceWithPaymentHistory(invoiceId: string, clientId: 
       })
     }
 
-    const stripeInvoiceAny = stripeInvoice as any;
     return {
       ...invoice,
       payment_history: paymentHistory,
       stripe_details: {
-        number: stripeInvoiceAny.number,
-        customer_email: stripeInvoiceAny.customer_email,
-        subtotal: stripeInvoiceAny.subtotal,
-        tax: stripeInvoiceAny.tax,
-        total: stripeInvoiceAny.total,
-        lines: stripeInvoiceAny.lines?.data?.map((line: any) => ({
-          description: line.description,
+        number: stripeInvoice.number ?? undefined,
+        customer_email: stripeInvoice.customer_email ?? undefined,
+        subtotal: stripeInvoice.subtotal ?? undefined,
+        tax: stripeInvoice.tax ?? undefined,
+        total: stripeInvoice.total ?? undefined,
+        lines: stripeInvoice.lines?.data?.map((line) => ({
+          description: line.description ?? undefined,
           amount: line.amount,
-          quantity: line.quantity,
+          quantity: line.quantity ?? undefined,
           price: line.price,
-        })) || [],
+        })) ?? [],
       }
     }
   } catch (error) {
@@ -399,7 +419,9 @@ export async function syncStripeInvoices(clientId: string, stripeCustomerId: str
         status: stripeInvoice.status as Invoice['status'],
         description: stripeInvoice.description,
         due_date: stripeInvoice.due_date ? new Date(stripeInvoice.due_date * 1000).toISOString() : null,
-        paid_at: (stripeInvoice as any).paid_at ? new Date((stripeInvoice as any).paid_at * 1000).toISOString() : null,
+        paid_at: stripeInvoice.status_transitions?.paid_at
+          ? new Date(stripeInvoice.status_transitions.paid_at * 1000).toISOString()
+          : null,
         hosted_invoice_url: stripeInvoice.hosted_invoice_url || null,
         invoice_pdf: stripeInvoice.invoice_pdf || null,
       }

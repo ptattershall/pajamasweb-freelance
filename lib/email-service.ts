@@ -478,6 +478,78 @@ function generateInvitationHtml(invitationUrl: string, adminName: string): strin
 }
 
 /**
+ * Quote email data (for sending price estimate from AI chat)
+ */
+export interface QuoteEmailData {
+  to: string;
+  recipientName?: string;
+  subject?: string;
+  quoteBody: string;
+}
+
+/**
+ * Send quote/estimate email (e.g. from AI chat pricing tool)
+ */
+export async function sendQuoteEmail(data: QuoteEmailData) {
+  try {
+    const subject = data.subject ?? 'Your PajamasWeb Project Estimate';
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com',
+      to: data.to,
+      subject,
+      html: generateQuoteEmailHtml(data),
+      tags: [{ name: 'category', value: 'quote_estimate' }],
+    });
+
+    if (result.error) {
+      throw new Error(`Failed to send quote email: ${result.error.message}`);
+    }
+
+    console.log(`Quote email sent to ${data.to}`, result.data);
+    return result.data;
+  } catch (error) {
+    console.error('Error sending quote email:', error);
+    throw error;
+  }
+}
+
+function generateQuoteEmailHtml(data: QuoteEmailData): string {
+  const bodyHtml = data.quoteBody
+    .split('\n')
+    .map((line) => {
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return `<p><strong>${line.slice(2, -2)}</strong></p>`;
+      }
+      if (line.startsWith('- ')) {
+        return `<li>${line.slice(2)}</li>`;
+      }
+      return `<p>${line || '<br />'}</p>`;
+    })
+    .join('\n');
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Your Project Estimate</h1>
+      </div>
+      <div style="background: #f9f9f9; padding: 32px 20px; border-radius: 0 0 8px 8px;">
+        <p style="font-size: 16px; margin-bottom: 20px;">Hi ${data.recipientName || 'there'},</p>
+        <p style="font-size: 16px; margin-bottom: 20px;">Here’s the estimate we discussed:</p>
+        <div style="background: white; border-radius: 8px; padding: 24px; border: 1px solid #e5e7eb;">
+          ${bodyHtml}
+        </div>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
+          Ready to move forward? Book a free consultation to discuss your project in detail.
+        </p>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 16px;">
+          — The PajamasWeb team
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Invoice email data (for sending new invoice or payment reminder)
  */
 export interface InvoiceEmailData {

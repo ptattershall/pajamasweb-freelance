@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { findSimilarBlogPosts } from '@/lib/supabase'
+import { findSimilarBlogPosts, type BlogPostMeta } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Filter out the current post
     const relatedPosts = similarPosts
-      .filter((post: any) => post.slug !== currentSlug)
+      .filter((post: BlogPostMeta) => post.slug !== currentSlug)
       .slice(0, limit)
 
     return NextResponse.json({

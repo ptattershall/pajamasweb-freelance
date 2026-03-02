@@ -123,7 +123,7 @@ export function SearchContent() {
 
           {results.total === 0 && (
             <p className="text-center text-gray-600 dark:text-gray-400">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </p>
           )}
         </div>

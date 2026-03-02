@@ -162,7 +162,12 @@ export async function updateEscalationStatus(
   status: 'open' | 'in_progress' | 'resolved' | 'closed',
   notes?: string
 ): Promise<Escalation> {
-  const updateData: any = {
+  const updateData: {
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    updated_at: string;
+    notes?: string;
+    resolved_at?: string;
+  } = {
     status,
     updated_at: new Date().toISOString(),
   };

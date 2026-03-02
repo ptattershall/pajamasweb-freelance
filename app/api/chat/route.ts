@@ -1,15 +1,19 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, convertToModelMessages } from 'ai';
+import { streamText } from 'ai';
+import type { CoreMessage } from 'ai';
 import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { retrieveRAGContext } from '@/lib/rag-service';
-import { pricingSuggestionTool, pricingInfoTool } from '@/lib/tools/pricing-suggestion';
+import { pricingSuggestionTool, pricingInfoTool, sendQuoteToEmailTool } from '@/lib/tools/pricing-suggestion';
+import { filterContent } from '@/lib/content-filter';
 import { invoiceStatusTool, invoiceDetailsTool } from '@/lib/tools/invoice-status';
 import { bookingStatusTool, bookingDetailsTool } from '@/lib/tools/booking-status';
 import { deliverablesTool, deliverableDetailsTool } from '@/lib/tools/deliverables';
+import { milestoneStatusTool, milestoneDetailsTool } from '@/lib/tools/milestone-status';
 
-type ChatMessage = { role: 'user' | 'assistant'; content: string; parts?: any[] };
+type MessagePart = { type: string; text?: string };
+type ChatMessage = { role: 'user' | 'assistant'; content: string; parts?: MessagePart[] };
 
 // Lazy initialize Supabase client
 let supabaseClient: ReturnType<typeof createClient> | null = null;
@@ -28,15 +32,16 @@ function getSupabaseClient(): ReturnType<typeof createClient> {
   return supabaseClient;
 }
 
-const supabase: any = new Proxy(
+// Lazy-init proxy; no generated DB schema, so we type as client and assert table inserts.
+type SupabaseClientLike = ReturnType<typeof createClient>;
+const supabase = new Proxy(
   {},
   {
-    get: (target, prop) => {
-      const client = getSupabaseClient();
-      return (client as any)[prop];
-    },
+    get: (_target, prop) => Reflect.get(getSupabaseClient(), prop),
   }
-);
+) as SupabaseClientLike;
+
+type InsertPayload = Record<string, unknown>;
 
 // Initialize rate limiter
 const ratelimit = new Ratelimit({
@@ -86,17 +91,31 @@ export async function POST(req: Request) {
       );
     }
 
+    // Content moderation: filter inappropriate content, PII, spam, phishing
+    if (typeof lastMessage.content === 'string') {
+      const filterResult = filterContent(lastMessage.content);
+      if (filterResult.filtered) {
+        return new Response(
+          JSON.stringify({
+            error: 'Your message could not be processed.',
+            details: filterResult.issues,
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Create or use existing session
     let session = sessionId;
     if (!session) {
-      const { data, error } = await supabase
-        .from('chat_sessions')
-        .insert({ user_id: user.id, title: 'New Chat' })
-        .select()
-        .single();
+      const insertPayload: InsertPayload = { user_id: user.id, title: 'New Chat' };
+      const builder = supabase.from('chat_sessions') as unknown as {
+        insert: (v: InsertPayload) => { select: () => { single: () => Promise<{ data: { id: string } | null; error: Error | null }> } };
+      };
+      const { data, error } = await builder.insert(insertPayload).select().single();
 
       if (error) throw error;
-      session = data.id;
+      session = data!.id;
     }
 
     // Retrieve RAG context for the user query
@@ -113,8 +132,9 @@ For authenticated clients, you have access to:
 - Invoice status and payment history
 - Upcoming bookings and meetings
 - Project deliverables and files
+- Project milestone status and timeline
 
-Use these tools proactively when clients ask about their account, payments, meetings, or project status.`;
+Use these tools proactively when clients ask about their account, payments, meetings, project status, milestones, or timeline.`;
 
     if (ragContext) {
       systemPrompt += `\n\nRelevant information to help answer the user's question:\n\n${ragContext}`;
@@ -128,6 +148,7 @@ Use these tools proactively when clients ask about their account, payments, meet
         // Pricing tools (for all users)
         pricingSuggestion: pricingSuggestionTool,
         pricingInfo: pricingInfoTool,
+        sendQuoteToEmail: sendQuoteToEmailTool,
         // Client-specific tools (for authenticated clients)
         invoiceStatus: invoiceStatusTool,
         invoiceDetails: invoiceDetailsTool,
@@ -135,8 +156,10 @@ Use these tools proactively when clients ask about their account, payments, meet
         bookingDetails: bookingDetailsTool,
         deliverables: deliverablesTool,
         deliverableDetails: deliverableDetailsTool,
+        milestoneStatus: milestoneStatusTool,
+        milestoneDetails: milestoneDetailsTool,
       },
-      messages: messages as any,
+      messages: messages as CoreMessage[],
     });
 
     // Log interaction
@@ -148,18 +171,18 @@ Use these tools proactively when clients ask about their account, payments, meet
         responseText = lastMsg.content;
       } else if (Array.isArray(lastMsg.content)) {
         responseText = lastMsg.content
-          .filter((part: any) => part.type === 'text')
-          .map((part: any) => part.text || '')
+          .filter((part: MessagePart) => part.type === 'text')
+          .map((part: MessagePart) => part.text || '')
           .join('');
       }
     }
-    // TODO: Log interaction (async, non-blocking)
-    // Temporarily disabled due to TypeScript type narrowing issue
-    // if (lastMessage && lastMessage.content) {
-    //   logChatInteraction(user.id, session, lastMessage.content as string, responseText).catch(err =>
-    //     console.error('Failed to log chat interaction:', err)
-    //   );
-    // }
+    const userMessageText =
+      typeof lastMessage?.content === 'string' ? lastMessage.content : '';
+    if (session) {
+      logChatInteraction(user.id, session, userMessageText, responseText).catch(
+        (err) => console.error('Failed to log chat interaction:', err)
+      );
+    }
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
@@ -191,13 +214,14 @@ async function logChatInteraction(
   aiResponse: string | undefined
 ) {
   try {
-    await supabase.from('chat_audit_log').insert({
+    const insertPayload: InsertPayload = {
       user_id: userId,
       session_id: sessionId,
       user_message: userMessage || '',
       ai_response: aiResponse || '',
       timestamp: new Date().toISOString(),
-    });
+    };
+    await (supabase.from('chat_audit_log') as unknown as { insert: (v: InsertPayload) => unknown }).insert(insertPayload);
   } catch (error) {
     console.error('Error logging chat interaction:', error);
   }

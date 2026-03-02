@@ -8,6 +8,13 @@ import { getAuthenticatedUser } from '@/lib/auth-service'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 
+type ConversationStat = {
+  id: string
+  title: string | null
+  message_count: number
+  created_at: string | null
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Get authenticated user from session
@@ -38,7 +45,7 @@ export async function GET(request: NextRequest) {
     let totalMessages = 0
     let userMessages = 0
     let assistantMessages = 0
-    const conversationStats: any[] = []
+    const conversationStats: ConversationStat[] = []
 
     if (sessions && sessions.length > 0) {
       for (const session of sessions) {

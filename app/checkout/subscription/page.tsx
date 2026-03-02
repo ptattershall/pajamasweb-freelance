@@ -65,7 +65,7 @@ function SubscriptionCheckoutContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <div className="container mx-auto flex items-center justify-center px-4 py-16">
           <div className="text-center">
             <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
@@ -78,7 +78,7 @@ function SubscriptionCheckoutContent() {
 
   if (error && !service) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         <div className="container mx-auto px-4 py-16">
           <div className="mx-auto max-w-md rounded-lg border border-red-200 bg-red-50 p-8 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-600" />
@@ -97,7 +97,7 @@ function SubscriptionCheckoutContent() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="container mx-auto px-4 py-8">
         <Link
           href={serviceSlug ? `/services/${serviceSlug}` : '/services'}
@@ -204,7 +204,7 @@ export default function SubscriptionCheckoutPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
           <div className="container mx-auto flex items-center justify-center px-4 py-16">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
           </div>

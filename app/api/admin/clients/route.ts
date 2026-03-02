@@ -15,7 +15,19 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
+
+type AuthUserRef = { email?: string }
+type ClientRow = {
+  user_id: string
+  display_name: string | null
+  company: string | null
+  email_verified: boolean | null
+  created_at: string | null
+  invited_by: string | null
+  invitation_accepted_at: string | null
+  auth_users?: AuthUserRef | AuthUserRef[] | null
+}
 
 const listClientsSchema = z.object({
   status: z.enum(['pending', 'active', 'all']).default('all'),
@@ -44,25 +56,10 @@ export async function GET(request: NextRequest) {
 
     const { status, search, limit, offset } = validation.data
 
-    // Get authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can list clients' }, { status: 403 })
-    }
 
     // Build query
     let query = supabase
@@ -107,10 +104,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Format response
-    const formattedClients = clients.map((client: any) => ({
+    const formattedClients = (clients ?? []).map((client: ClientRow) => ({
       id: client.user_id,
       name: client.display_name,
-      email: client.auth_users?.email,
+      email: Array.isArray(client.auth_users) ? client.auth_users[0]?.email : client.auth_users?.email,
       company: client.company,
       status: client.invitation_accepted_at ? 'active' : 'pending',
       createdAt: client.created_at,

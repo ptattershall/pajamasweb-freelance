@@ -9,8 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthenticatedUser } from '@/lib/auth-service'
-import { createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 
 const listInvitationsSchema = z.object({
   status: z.enum(['pending', 'accepted', 'expired']).optional(),
@@ -20,30 +19,10 @@ const listInvitationsSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request)
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Verify user is OWNER
     const supabase = createServerSupabaseClient()
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json(
-        { error: 'Only admins can list invitations' },
-        { status: 403 }
-      )
-    }
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams

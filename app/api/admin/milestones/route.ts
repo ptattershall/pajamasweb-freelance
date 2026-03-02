@@ -2,7 +2,7 @@
  * Admin Milestones API Route
  */
 
-import { getAuthenticatedUser, createServerSupabaseClient } from '@/lib/auth-service'
+import { requireOwner, createServerSupabaseClient } from '@/lib/auth-service'
 import { createMilestoneSchema } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, rateLimiters, getRateLimitHeaders } from '@/lib/rate-limit'
@@ -10,24 +10,10 @@ import { validateCsrfToken } from '@/lib/csrf-protection'
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can access this' }, { status: 403 })
-    }
 
     // Get all milestones with client info
     const { data, error } = await supabase
@@ -52,11 +38,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser(request)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await requireOwner(request)
+    if (!auth.ok) return auth.error
+    const { user } = auth
 
     // Validate CSRF token
     const csrfValidation = await validateCsrfToken(request)
@@ -91,17 +75,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServerSupabaseClient()
-
-    // Verify user is OWNER
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (profile?.role !== 'OWNER') {
-      return NextResponse.json({ error: 'Only admins can create milestones' }, { status: 403 })
-    }
 
     const { client_id, title, description, due_date, status, progress_percent } = validation.data
 

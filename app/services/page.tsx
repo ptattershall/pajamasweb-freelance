@@ -43,7 +43,7 @@ export default async function ServicesPage() {
   ])
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main id="main-content" className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <JsonLdScript schema={breadcrumbSchema} />
       <div className="container mx-auto px-4 py-16">
         {/* Header */}

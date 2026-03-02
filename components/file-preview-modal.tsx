@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Download, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 interface FilePreviewModalProps {
   isOpen: boolean
@@ -25,7 +26,8 @@ export function FilePreviewModal({
 
   useEffect(() => {
     if (isOpen) {
-      setError(null)
+      const id = setTimeout(() => setError(null), 0)
+      return () => clearTimeout(id)
     }
   }, [isOpen])
 
@@ -84,7 +86,7 @@ export function FilePreviewModal({
             />
           ) : isImage ? (
             <div className="flex items-center justify-center h-full">
-              <img
+              <Image
                 src={fileUrl}
                 alt={fileName}
                 className="max-w-full max-h-full object-contain"
