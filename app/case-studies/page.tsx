@@ -50,7 +50,8 @@ export default function CaseStudiesPage() {
             Case Studies
           </h1>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            Explore how we've helped businesses achieve their goals through strategic design and development.
+            Explore how we&apos;ve helped businesses achieve their goals through strategic design and
+            development.
           </p>
         </div>
 

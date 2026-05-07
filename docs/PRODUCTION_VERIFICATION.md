@@ -17,6 +17,6 @@ Before going live, confirm the following.
 
 ## Supabase
 
-- **URLs and keys:** Set production `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_SECRET_KEY` (and anon key if used).
+- **URLs and keys:** Set production `NEXT_PUBLIC_SUPABASE_URL` and **`SUPABASE_SERVICE_ROLE_KEY`** (canonical; matches [lib/supabase-server.ts](../lib/supabase-server.ts) and most API routes). Some scripts also accept `SUPABASE_SERVICE_ROLE_SECRET_KEY` as an alias; the Stripe webhook resolves the service role key in that order. Set `NEXT_PUBLIC_SUPABASE_ANON_KEY` where the client or proxy verifies sessions.
 - **Auth:** Configure Site URL and Redirect URLs in Supabase Dashboard → Authentication → URL Configuration per [SECURITY_AND_SUPABASE_CONFIG.md](SECURITY_AND_SUPABASE_CONFIG.md).
 - **RLS:** Apply all migrations in `scripts/migrations/` in order. In Dashboard → Database → Tables, confirm RLS is **Enabled** and policies match the migrations (see [SECURITY_AND_SUPABASE_CONFIG.md](SECURITY_AND_SUPABASE_CONFIG.md)).

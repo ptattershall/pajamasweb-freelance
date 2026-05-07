@@ -92,9 +92,9 @@ export default function SecurityTestPage() {
             <h2 className="text-xl font-semibold mb-3">How it works:</h2>
             <ol className="list-decimal list-inside space-y-2 text-gray-700">
               <li>Make sure you are <strong>logged out</strong> of the portal</li>
-              <li>Click "Run Security Tests" below</li>
+              <li>{'Click "Run Security Tests" below'}</li>
               <li>Each API route should return <strong>401 Unauthorized</strong></li>
-              <li>If any route returns a different status, it's not properly secured</li>
+              <li>If any route returns a different status, it&apos;s not properly secured</li>
             </ol>
           </div>
 

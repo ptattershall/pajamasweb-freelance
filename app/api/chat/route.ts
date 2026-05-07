@@ -11,9 +11,9 @@ import { invoiceStatusTool, invoiceDetailsTool } from '@/lib/tools/invoice-statu
 import { bookingStatusTool, bookingDetailsTool } from '@/lib/tools/booking-status';
 import { deliverablesTool, deliverableDetailsTool } from '@/lib/tools/deliverables';
 import { milestoneStatusTool, milestoneDetailsTool } from '@/lib/tools/milestone-status';
+import { chatPostBodySchema } from '@/lib/validation-schemas';
 
 type MessagePart = { type: string; text?: string };
-type ChatMessage = { role: 'user' | 'assistant'; content: string; parts?: MessagePart[] };
 
 // Lazy initialize Supabase client
 let supabaseClient: ReturnType<typeof createClient> | null = null;
@@ -51,10 +51,28 @@ const ratelimit = new Ratelimit({
 
 export async function POST(req: Request) {
   try {
-    const { messages, sessionId } = await req.json() as {
-      messages: ChatMessage[];
-      sessionId?: string;
-    };
+    let raw: unknown
+    try {
+      raw = await req.json()
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const bodyParsed = chatPostBodySchema.safeParse(raw)
+    if (!bodyParsed.success) {
+      return new Response(
+        JSON.stringify({
+          error: 'Validation failed',
+          details: bodyParsed.error.flatten(),
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { messages, sessionId } = bodyParsed.data
 
     // Get user from auth header
     const authHeader = req.headers.get('authorization');

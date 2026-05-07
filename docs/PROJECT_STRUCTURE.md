@@ -1,117 +1,72 @@
-# Project Structure
+# Project structure
 
-## Directory Layout
+High-level map of the repo. For feature status see [REMAINING_FEATURES_BREAKDOWN.md](./REMAINING_FEATURES_BREAKDOWN.md).
+
+## Directory layout
 
 ```
 pajamasweb-freelance/
-├── app/                          # Next.js App Router
-│   ├── admin/                    # Admin CMS (Phase 3)
-│   │   ├── layout.tsx            # Admin layout with sidebar
-│   │   ├── page.tsx              # Dashboard
-│   │   ├── images/page.tsx       # Image management
-│   │   ├── blog/page.tsx         # Blog management
-│   │   └── case-studies/page.tsx # Case studies management
-│   ├── api/
-│   │   └── search/route.ts       # Search API endpoint
-│   ├── blog/                     # Blog pages
-│   │   ├── page.tsx              # Blog listing
-│   │   └── [slug]/page.tsx       # Blog detail (SSG)
-│   ├── case-studies/             # Case studies pages
-│   │   ├── page.tsx              # Case studies listing
-│   │   └── [slug]/page.tsx       # Case study detail (SSG)
-│   ├── search/page.tsx           # Search page
-│   ├── layout.tsx                # Root layout
-│   ├── page.tsx                  # Home page
-│   └── globals.css               # Global styles with CSS variables
-│
-├── components/
-│   ├── ui/                       # shadcn/ui components
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   ├── card.tsx
-│   │   ├── dialog.tsx
-│   │   ├── form.tsx
-│   │   ├── label.tsx
-│   │   └── alert.tsx
-│   └── SearchContent.tsx         # Search component
-│
-├── content/                      # MDX content files
-│   ├── blog/                     # Blog posts
-│   │   ├── getting-started-with-web-design.mdx
-│   │   └── performance-optimization-tips.mdx
-│   └── case-studies/             # Case studies
-│       └── ecommerce-redesign.mdx
-│
-├── lib/
-│   ├── content.ts                # Content utility functions
-│   ├── supabase.ts               # Supabase client
-│   └── utils.ts                  # shadcn/ui utilities
-│
-├── scripts/
-│   └── sync-metadata.ts          # Metadata sync script
-│
-├── docs/
-│   ├── DEVELOPMENT_ROADMAP.md    # Project roadmap
-│   ├── PHASE2_SETUP.md           # Phase 2 setup guide
-│   ├── PHASE3_SETUP.md           # Phase 3 setup guide
-│   ├── SHADCN_SETUP.md           # shadcn/ui setup
-│   ├── PROJECT_STRUCTURE.md      # This file
-│   ├── features/
-│   │   └── 01-content-management/
-│   │       ├── feature.md        # Feature requirements
-│   │       └── IMPLEMENTATION_PROGRESS.md
-│   └── database/
-│       └── 01-content-metadata-schema.sql
-│
-├── public/                       # Static assets
-├── components.json               # shadcn/ui config
-├── tailwind.config.js            # Tailwind CSS config
-├── tsconfig.json                 # TypeScript config
-├── next.config.ts                # Next.js config
-├── package.json                  # Dependencies
-└── README.md                     # Project README
+├── app/                          # Next.js App Router (v16)
+│   ├── admin/                    # Owner CMS: dashboard, clients, invoices, payments, blog, images, …
+│   ├── api/                      # Route handlers (REST): auth, portal, admin, webhooks, cron, OG, sitemap, …
+│   ├── auth/                     # Sign-in, sign-up, password reset, invitation accept, callback UI
+│   ├── portal/                   # Client / SALES / DEV dashboard (sidebar layout)
+│   ├── blog/, case-studies/      # MDX-backed content pages
+│   ├── services/, checkout/, book/
+│   ├── chat/                     # Full-page chat (optional entry)
+│   ├── layout.tsx, page.tsx, globals.css
+│   └── ...
+├── components/                   # UI: ChatWidget, checkout, admin forms, JsonLdScript, …
+│   └── ui/                       # shadcn-style primitives
+├── content/                      # MDX sources (blog, case studies)
+├── lib/                          # Supabase, Stripe, auth, services, RAG, validation-schemas, rate-limit, …
+├── scripts/                      # sync-metadata, migrations runner, seed, test utilities
+├── tests/e2e/                    # Playwright (e.g. accessibility)
+├── docs/                         # Product & technical documentation
+├── proxy.ts                      # Next.js 16 proxy: /admin/* and /portal/* auth + CSRF cookie
+├── next.config.ts
+├── package.json
+└── ...
 ```
 
-## Key Technologies
+## Request interception (auth)
 
-- **Next.js 16** - React framework with App Router
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS v3** - Styling
-- **shadcn/ui** - Component library
-- **Supabase** - Backend & database
-- **next-mdx-remote** - MDX rendering
-- **gray-matter** - Frontmatter parsing
+- **[proxy.ts](../proxy.ts)** — `export async function proxy` with `config.matcher` for `/admin/:path*` and `/portal/:path*`. Admin uses JWT cookie; portal uses Supabase session cookie. Not named `middleware.ts` (Next 16 convention).
 
-## Development Phases
+## Key technologies
 
-- ✅ **Phase 1** - Basic MDX Setup
-- ✅ **Phase 2** - Supabase Metadata Integration
-- 🔄 **Phase 3** - Admin CMS UI (In Progress)
-- ⬜ **Phase 4** - Vector Embeddings & Recommendations
+- **Next.js 16** — App Router
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS v3** + **shadcn/ui**
+- **Supabase** — Postgres, Auth, Storage (RLS via `scripts/migrations/`)
+- **Stripe** — Checkout, subscriptions, invoicing, webhooks
+- **next-mdx-remote** + **gray-matter** — MDX content (no Contentlayer)
+- **Vercel Analytics** + **Sentry**
+- **Upstash Redis** — rate limiting (where configured)
+- **AI SDK** / **LangChain** — chat + tools
 
-## Running the Project
+## Common commands
 
 ```bash
-# Development
 npm run dev
-
-# Build
 npm run build
-
-# Start production
 npm start
-
-# Lint
 npm run lint
+npm run test:a11y
+npm run migrate
+npm run seed
 ```
 
-## Environment Variables
+## Environment variables (minimal)
 
-Create `.env.local`:
+See [.env.local](../.env.local) (not committed) and [PRODUCTION_VERIFICATION.md](./PRODUCTION_VERIFICATION.md). Typically:
 
-```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (canonical; some code paths also accept `SUPABASE_SERVICE_ROLE_SECRET_KEY`)
+- `SUPABASE_JWT_SECRET` (admin JWT / verification)
+- Stripe, Resend, OpenAI, Upstash, Sentry, cron secrets as needed for deployed features
 
+## Documentation index
+
+- [docs/README.md](./README.md)

@@ -7,25 +7,30 @@ import {
   BlogPostMeta,
   CaseStudyMeta,
 } from '@/lib/supabase'
+import { searchQuerySchema } from '@/lib/validation-schemas'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const query = searchParams.get('q')
-    const tag = searchParams.get('tag')
-    const type = searchParams.get('type') // 'blog', 'case-studies', or 'all'
+    const parsed = searchQuerySchema.safeParse({
+      q: searchParams.get('q') || undefined,
+      tag: searchParams.get('tag') || undefined,
+      type: searchParams.get('type') || undefined,
+    })
 
-    if (!query && !tag) {
+    if (!parsed.success) {
+      const flat = parsed.error.flatten()
       return NextResponse.json(
-        { error: 'Query or tag parameter is required' },
+        { error: 'Validation failed', details: flat },
         { status: 400 }
       )
     }
 
+    const { q: query, tag, type } = parsed.data
+
     let blogResults: BlogPostMeta[] = []
     let caseStudyResults: CaseStudyMeta[] = []
 
-    // Search by query
     if (query) {
       if (type === 'blog' || type === 'all' || !type) {
         blogResults = await searchBlogPosts(query)
@@ -35,7 +40,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter by tag
     if (tag) {
       if (type === 'blog' || type === 'all' || !type) {
         blogResults = await getBlogPostsByTag(tag)

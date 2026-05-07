@@ -45,7 +45,7 @@ export default function DashboardPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Welcome to Your Portal</h1>
-        <p className="text-muted-foreground">Manage your projects, invoices, and bookings in one place</p>
+        <p className="text-muted-foreground">Manage your projects, invoices, and meetings in one place</p>
       </div>
 
       {/* Quick Stats */}
@@ -112,7 +112,7 @@ export default function DashboardPage() {
             </Link>
             <Link href="/portal/bookings">
               <Button variant="outline" className="w-full justify-start">
-                Schedule Meeting
+                View Meetings
               </Button>
             </Link>
             <Link href="/portal/deliverables">

@@ -1,8 +1,9 @@
-# 🎯 Client Portal Invitation System - START HERE
+# Client Portal Invitation System — START HERE
 
-**Status**: Phase 1 & 3 Complete ✅ | Phase 2 & 4 Ready to Start ⏳  
-**Date**: 2025-11-14  
-**What's New**: Admin-controlled invitation system for client portal
+**Note:** Long-form invitation guides (README, quick reference, phase write-ups) live under **[docs/archive/features/05-client-portal/](../../archive/features/05-client-portal/)** so this folder stays small. Links below point there.
+
+**Status:** Invitation system and portal MVP are implemented in code; archive docs are historical session notes.  
+**Date (original):** 2025-11-14
 
 ## 🚀 Quick Summary
 
@@ -21,9 +22,9 @@ Your client portal has been **converted from open self-registration to an admin-
 - Admin API endpoints
 - Comprehensive documentation (8 files)
 
-### ⏳ Next Steps
-- Admin dashboard for managing clients
-- Client portal features (invoices, contracts, etc.)
+### Current app (see repo)
+- Admin clients and invitations: `app/admin/clients`, `app/api/admin/invitations/*`
+- Portal: invoices, payments, subscriptions, bookings, deliverables, contracts, milestones, chat history under `app/portal/*`
 
 ## 🎯 How It Works
 
@@ -45,22 +46,20 @@ Your client portal has been **converted from open self-registration to an admin-
 
 ## 📚 Documentation Guide
 
-### 🟢 For Everyone
-- **[README_INVITATION_SYSTEM.md](./README_INVITATION_SYSTEM.md)** - Complete overview
+### For everyone
+- **[README_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/README_INVITATION_SYSTEM.md)** — overview
 
-### 🔵 For Developers
-- **[QUICK_REFERENCE_INVITATION_SYSTEM.md](./QUICK_REFERENCE_INVITATION_SYSTEM.md)** - API reference
-- **[INVITATION_SYSTEM_ARCHITECTURE.md](./INVITATION_SYSTEM_ARCHITECTURE.md)** - System design
+### For developers
+- **[QUICK_REFERENCE_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/QUICK_REFERENCE_INVITATION_SYSTEM.md)** — API reference
+- **[INVITATION_SYSTEM_ARCHITECTURE.md](./INVITATION_SYSTEM_ARCHITECTURE.md)** — system design (this folder)
 
-### 🟡 For Project Managers
-- **[CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md](./CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md)** - Progress tracker
-- **[SESSION_SUMMARY_INVITATION_SYSTEM.md](./SESSION_SUMMARY_INVITATION_SYSTEM.md)** - Today's work
+### For project / history
+- **[CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md](../../archive/features/05-client-portal/CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md)** — tracker
+- **[SESSION_SUMMARY_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/SESSION_SUMMARY_INVITATION_SYSTEM.md)** — session notes
 
-### 🟣 For Next Phase
-- **[PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md](./PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md)** - Admin dashboard guide
-
-### 📑 Full Index
-- **[INDEX_INVITATION_SYSTEM.md](./INDEX_INVITATION_SYSTEM.md)** - Complete documentation index
+### Admin / phases (archive)
+- **[PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md](../../archive/features/05-client-portal/PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md)**
+- **[INDEX_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/INDEX_INVITATION_SYSTEM.md)** — full index
 
 ## 🔐 Security Features
 
@@ -82,15 +81,9 @@ Your client portal has been **converted from open self-registration to an admin-
 - `app/api/auth/accept-invitation/route.ts`
 - `app/auth/accept-invitation/page.tsx`
 
-### Documentation Files (8)
-- `00_START_HERE.md` (this file)
-- `INDEX_INVITATION_SYSTEM.md`
-- `README_INVITATION_SYSTEM.md`
-- `QUICK_REFERENCE_INVITATION_SYSTEM.md`
-- `INVITATION_SYSTEM_ARCHITECTURE.md`
-- `INVITATION_SYSTEM_IMPLEMENTATION_SUMMARY.md`
-- `CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md`
-- `PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md`
+### Documentation files
+- This file; [CLIENT_PORTAL_FEATURE.md](./CLIENT_PORTAL_FEATURE.md); [INVITATION_SYSTEM_ARCHITECTURE.md](./INVITATION_SYSTEM_ARCHITECTURE.md)
+- Invitation deep-dives: [docs/archive/features/05-client-portal/](../../archive/features/05-client-portal/)
 
 ### Updated Files (3)
 - `lib/auth-service.ts`
@@ -110,8 +103,8 @@ Your client portal has been **converted from open self-registration to an admin-
 2. Accept invitation as client
 3. Sign in to portal
 
-### Step 3: Read Documentation
-Start with: `README_INVITATION_SYSTEM.md`
+### Step 3: Read documentation
+Start with: [README_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/README_INVITATION_SYSTEM.md)
 
 ## 🎯 Next Phase (Phase 2)
 
@@ -120,17 +113,17 @@ Build the admin dashboard:
 - Invitation creation form
 - Resend/revoke functionality
 
-See: `PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md`
+See: [PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md](../../archive/features/05-client-portal/PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md)
 
 ## 📞 Questions?
 
 | Question | Answer |
 |----------|--------|
-| How does it work? | See `README_INVITATION_SYSTEM.md` |
-| What's the architecture? | See `INVITATION_SYSTEM_ARCHITECTURE.md` |
-| What API endpoints? | See `QUICK_REFERENCE_INVITATION_SYSTEM.md` |
-| What's the status? | See `CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md` |
-| What's next? | See `PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md` |
+| How does it work? | [README_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/README_INVITATION_SYSTEM.md) |
+| What's the architecture? | [INVITATION_SYSTEM_ARCHITECTURE.md](./INVITATION_SYSTEM_ARCHITECTURE.md) |
+| What API endpoints? | [QUICK_REFERENCE_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/QUICK_REFERENCE_INVITATION_SYSTEM.md) |
+| What's the status? | [CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md](../../archive/features/05-client-portal/CLIENT_PORTAL_INVITATION_SYSTEM_TRACKING.md) |
+| Admin phases (archive) | [PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md](../../archive/features/05-client-portal/PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md) |
 
 ## ✨ Key Achievements
 
@@ -140,24 +133,19 @@ See: `PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md`
 ✅ **Documented** - 8 comprehensive guides  
 ✅ **Production-Ready** - Ready to deploy  
 
-## 🎉 Status
+## Status (historical labels)
 
-```
-Phase 1: Database & Core        ✅ COMPLETE
-Phase 2: Admin Dashboard        ⏳ READY TO START
-Phase 3: Client Signup          ✅ COMPLETE
-Phase 4: Portal Features        ⏳ READY TO START
-```
+Archive phase labels reflected rollout order; the app now includes admin invitation APIs, portal surfaces, and related migrations. Use [CLIENT_PORTAL_FEATURE.md](./CLIENT_PORTAL_FEATURE.md) for the current feature narrative.
 
-## 📖 Recommended Reading Order
+## Recommended reading order
 
-1. This file (you are here)
-2. `README_INVITATION_SYSTEM.md` - Complete overview
-3. `INVITATION_SYSTEM_ARCHITECTURE.md` - System design
-4. `QUICK_REFERENCE_INVITATION_SYSTEM.md` - API reference
-5. `PHASE2_ADMIN_FUNCTIONALITY_GUIDE.md` - Next phase
+1. This file
+2. [CLIENT_PORTAL_FEATURE.md](./CLIENT_PORTAL_FEATURE.md)
+3. [README_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/README_INVITATION_SYSTEM.md)
+4. [INVITATION_SYSTEM_ARCHITECTURE.md](./INVITATION_SYSTEM_ARCHITECTURE.md)
+5. [QUICK_REFERENCE_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/QUICK_REFERENCE_INVITATION_SYSTEM.md)
 
 ---
 
-**Ready to proceed?** Start with `README_INVITATION_SYSTEM.md`
+**Invitation details:** [README_INVITATION_SYSTEM.md](../../archive/features/05-client-portal/README_INVITATION_SYSTEM.md)
 

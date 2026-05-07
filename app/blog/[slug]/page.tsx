@@ -79,7 +79,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
   }
 
   // Find hero image
-  const heroImage = images?.find((img: any) => img.is_hero)
+  const heroImage = images?.find((img: BlogPostImage) => img.is_hero)
 
   // Fetch embedding for related posts
   let embedding: number[] | undefined

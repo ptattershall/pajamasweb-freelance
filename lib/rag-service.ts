@@ -29,13 +29,15 @@ export async function storeEmbedding(
 ) {
   const { data, error } = await supabase
     .from('embeddings')
-    .insert({
-      content,
-      embedding,
-      type,
-      source,
-      metadata: metadata || {},
-    })
+    .insert(
+      {
+        content,
+        embedding,
+        type,
+        source,
+        metadata: metadata || {},
+      } as never
+    )
     .select()
 
   if (error) {
@@ -58,14 +60,14 @@ export async function retrieveSimilarEmbeddings(
     query_embedding: queryEmbedding,
     match_count: limit,
     similarity_threshold: threshold,
-  })
+  } as never)
 
   if (error) {
     console.error('Error retrieving similar embeddings:', error)
     throw error
   }
 
-  return data || []
+  return (data as EmbeddingRecord[] | null) ?? []
 }
 
 /**
@@ -115,7 +117,7 @@ export async function batchStoreEmbeddings(
 ) {
   const { data, error } = await supabase
     .from('embeddings')
-    .insert(items)
+    .insert(items as never)
     .select()
 
   if (error) {

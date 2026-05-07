@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import ChatWidget from '@/components/ChatWidget';
 
 export const metadata: Metadata = {
@@ -33,8 +34,20 @@ export default function ChatPage() {
               <h2 className="font-semibold text-amber-900 mb-3">Important Notes</h2>
               <ul className="space-y-2 text-amber-800 text-sm">
                 <li>• Price estimates are approximate and may vary based on specific requirements</li>
-                <li>• For detailed quotes, please book a consultation call</li>
-                <li>• Client-specific information requires authentication</li>
+                <li>
+                  • For detailed quotes,{' '}
+                  <Link href="/contact" className="font-medium underline">
+                    send us a message
+                  </Link>{' '}
+                  and we&apos;ll follow up
+                </li>
+                <li>
+                  • Chat currently requires authentication. Please{' '}
+                  <Link href="/auth/signin" className="font-medium underline">
+                    sign in
+                  </Link>{' '}
+                  first.
+                </li>
                 <li>• Our team will follow up within 24 hours for complex inquiries</li>
               </ul>
             </div>

@@ -5,8 +5,12 @@
  * for the Client Portal feature.
  */
 
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import {
+  createClientSupabaseClient,
+  createServerSupabaseClient,
+} from './supabase-server'
+export { createClientSupabaseClient, createServerSupabaseClient } from './supabase-server'
 
 import type { ProfileRole } from './validation-schemas'
 
@@ -31,26 +35,6 @@ export interface SignUpData {
 export interface SignInData {
   email: string
   password: string
-}
-
-/**
- * Create a Supabase client for server-side operations
- */
-export function createServerSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
-
-/**
- * Create a Supabase client for client-side operations
- */
-export function createClientSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 }
 
 /**
@@ -293,10 +277,7 @@ export async function getAuthenticatedUser(request: Request) {
     }
 
     // Create Supabase client and verify the session
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createClientSupabaseClient()
 
     const { data: { user }, error } = await supabase.auth.getUser(authToken)
 

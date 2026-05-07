@@ -8,6 +8,13 @@ import { useEffect, useState } from 'react'
 import { CheckCircle, Clock, AlertCircle, FileText, Package } from 'lucide-react'
 import Link from 'next/link'
 
+interface PortalMilestone {
+  id: string
+  title: string
+  progress_percent: number
+  status: string
+}
+
 interface ProjectOverview {
   stats: {
     total_milestones: number
@@ -19,9 +26,9 @@ interface ProjectOverview {
     signed_contracts: number
     average_progress: number
   }
-  milestones: any[]
-  deliverables: any[]
-  contracts: any[]
+  milestones: PortalMilestone[]
+  deliverables: unknown[]
+  contracts: unknown[]
 }
 
 export default function ProjectsPage() {
@@ -54,7 +61,7 @@ export default function ProjectsPage() {
     return <div className="text-center py-12">Failed to load project overview</div>
   }
 
-  const { stats, milestones, deliverables, contracts } = overview
+  const { stats, milestones } = overview
 
   return (
     <div>

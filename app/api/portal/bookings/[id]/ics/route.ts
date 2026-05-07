@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getProfileForRequest } from '@/lib/auth-service'
-
-type BookingForICS = {
-  id: string
-  starts_at: string
-  ends_at: string
-  title: string
-  description?: string | null
-  location?: string | null
-  meeting_link?: string | null
-  status: string
-}
+import { generateIcs } from '@/lib/ics-utils'
 
 /**
  * Generate ICS file for a booking
@@ -49,7 +39,16 @@ export async function GET(
     }
 
     // Generate ICS content
-    const icsContent = generateICS(booking)
+    const icsContent = generateIcs({
+      id: booking.id,
+      title: booking.title,
+      description: booking.description,
+      startsAt: booking.starts_at,
+      endsAt: booking.ends_at,
+      location: booking.location,
+      meetingLink: booking.meeting_link,
+      status: booking.status,
+    })
 
     // Return ICS file
     return new NextResponse(icsContent, {
@@ -67,61 +66,4 @@ export async function GET(
   }
 }
 
-/**
- * Generate ICS file content
- */
-function generateICS(booking: BookingForICS): string {
-  const formatICSDate = (date: string) => {
-    return new Date(date)
-      .toISOString()
-      .replace(/[-:]/g, '')
-      .replace(/\.\d{3}/, '')
-  }
-
-  const escapeICSText = (text: string) => {
-    return text
-      .replace(/\\/g, '\\\\')
-      .replace(/;/g, '\\;')
-      .replace(/,/g, '\\,')
-      .replace(/\n/g, '\\n')
-  }
-
-  const now = formatICSDate(new Date().toISOString())
-  const start = formatICSDate(booking.starts_at)
-  const end = formatICSDate(booking.ends_at)
-
-  const icsContent = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//PajamasWeb//Booking Calendar//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${booking.id}@pajamasweb.com`,
-    `DTSTAMP:${now}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:${escapeICSText(booking.title)}`,
-  ]
-
-  if (booking.description) {
-    icsContent.push(`DESCRIPTION:${escapeICSText(booking.description)}`)
-  }
-
-  if (booking.location) {
-    icsContent.push(`LOCATION:${escapeICSText(booking.location)}`)
-  }
-
-  if (booking.meeting_link) {
-    icsContent.push(`URL:${booking.meeting_link}`)
-  }
-
-  icsContent.push(
-    `STATUS:${booking.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
-    'END:VEVENT',
-    'END:VCALENDAR'
-  )
-
-  return icsContent.join('\r\n')
-}
 

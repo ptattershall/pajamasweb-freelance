@@ -2,9 +2,9 @@
  * Sign In API Route
  */
 
-import { createClientSupabaseClient } from '@/lib/auth-service'
 import { signInSchema } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,37 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = validation.data
 
-    const supabase = createClientSupabaseClient()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabasePublishableKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabasePublishableKey) {
+      return NextResponse.json(
+        { error: 'Missing Supabase environment configuration' },
+        { status: 500 }
+      )
+    }
+
+    let response = NextResponse.json({ success: true }, { status: 200 })
+
+    const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+
+          response = NextResponse.json({ success: true }, { status: 200 })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    })
 
     // Sign in user
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -36,8 +66,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create response with session cookie
-    const response = NextResponse.json(
+    const finalResponse = NextResponse.json(
       {
         success: true,
         user: {
@@ -48,15 +77,11 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     )
 
-    // Set session cookie
-    response.cookies.set('auth-token', data.session.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+    response.cookies.getAll().forEach((cookie) => {
+      finalResponse.cookies.set(cookie)
     })
 
-    return response
+    return finalResponse
   } catch (error) {
     console.error('Sign in error:', error)
     return NextResponse.json(

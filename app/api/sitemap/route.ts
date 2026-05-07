@@ -74,9 +74,9 @@ export async function GET() {
         priority: 0.7,
       },
       {
-        url: '/book',
+        url: '/contact',
         lastmod: today,
-        changefreq: 'weekly',
+        changefreq: 'monthly',
         priority: 0.8,
       }
     )

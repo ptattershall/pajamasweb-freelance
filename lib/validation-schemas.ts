@@ -117,7 +117,14 @@ export const createMilestoneSchema = z.object({
   progress_percent: z.number().min(0).max(100).default(0),
 })
 
-export const updateMilestoneSchema = createMilestoneSchema.partial()
+export const updateMilestoneSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  title: z.string().min(1, 'Title is required').max(255, 'Title must be less than 255 characters').optional(),
+  description: z.string().optional(),
+  due_date: z.string().datetime().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked']).optional(),
+  progress_percent: z.number().min(0).max(100).optional(),
+})
 
 export const milestoneUpdateSchema = z.object({
   update_text: z.string().min(1, 'Update text is required').max(1000, 'Update must be less than 1000 characters'),
@@ -164,7 +171,12 @@ export const createProfileSchema = z.object({
   company: z.string().max(255).optional(),
 })
 
-export const updateProfileSchema = createProfileSchema.partial()
+export const updateProfileSchema = z.object({
+  user_id: z.string().uuid('Invalid user ID').optional(),
+  role: profileRoleEnum.optional(),
+  display_name: z.string().min(1, 'Display name is required').max(255).optional(),
+  company: z.string().max(255).optional(),
+})
 
 // ============================================================================
 // DATABASE SCHEMAS - CLIENT ASSIGNMENTS
@@ -200,27 +212,32 @@ export const updateClientAssignmentSchema = z.object({
 // DATABASE SCHEMAS - BOOKINGS
 // ============================================================================
 
+export const bookingProviderEnum = z.enum(['calcom', 'gcal', 'manual'])
+export type BookingProvider = z.infer<typeof bookingProviderEnum>
+
 export const bookingSchema = z.object({
   id: z.string().uuid(),
-  client_id: z.string().uuid(),
+  client_id: z.string().uuid().nullable(),
   assigned_user_id: z.string().uuid().nullable().optional(),
+  created_by: z.string().uuid().nullable().optional(),
   title: z.string(),
   description: z.string().nullable(),
   starts_at: z.string().datetime(),
   ends_at: z.string().datetime(),
   external_id: z.string().nullable(),
-  provider: z.enum(['calcom', 'gcal']),
+  provider: bookingProviderEnum,
   attendee_email: z.string().email(),
   attendee_name: z.string().nullable(),
   location: z.string().nullable(),
   meeting_link: z.string().nullable(),
   notes: z.string().nullable(),
+  agenda: z.string().nullable().optional(),
   status: z.enum(['confirmed', 'cancelled', 'rescheduled']),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 })
 
-export const createBookingSchema = z.object({
+const createBookingFields = z.object({
   client_id: z.string().uuid('Invalid client ID'),
   assigned_user_id: z.string().uuid().optional().nullable(),
   title: z.string().min(1, 'Title is required').max(255),
@@ -234,12 +251,131 @@ export const createBookingSchema = z.object({
   location: z.string().optional(),
   meeting_link: z.string().url().optional(),
   notes: z.string().optional(),
-}).refine((data) => new Date(data.starts_at) < new Date(data.ends_at), {
-  message: 'Start time must be before end time',
-  path: ['ends_at'],
 })
 
-export const updateBookingSchema = createBookingSchema.partial()
+export const createBookingSchema = createBookingFields.refine(
+  (data) => new Date(data.starts_at) < new Date(data.ends_at),
+  {
+    message: 'Start time must be before end time',
+    path: ['ends_at'],
+  }
+)
+
+export const updateBookingSchema = createBookingFields.partial().refine(
+  (data) => {
+    if (data.starts_at !== undefined && data.ends_at !== undefined) {
+      return new Date(data.starts_at) < new Date(data.ends_at)
+    }
+    return true
+  },
+  {
+    message: 'Start time must be before end time',
+    path: ['ends_at'],
+  }
+)
+
+/**
+ * Schema used by the admin "schedule a meeting" flow.
+ * - `client_id` is OPTIONAL (admin can schedule with prospects who don't have an account).
+ * - Provider defaults to 'manual'.
+ * - `notify_attendee` controls whether we send the email + ICS attachment.
+ */
+export const adminCreateBookingSchema = z
+  .object({
+    client_id: z.string().uuid('Invalid client ID').optional().nullable(),
+    title: z
+      .string()
+      .min(1, 'Title is required')
+      .max(255, 'Title must be less than 255 characters'),
+    description: z.string().max(2000).optional(),
+    starts_at: z.string().datetime('Invalid start time'),
+    ends_at: z.string().datetime('Invalid end time'),
+    attendee_email: z.string().email('Invalid email'),
+    attendee_name: z.string().max(255).optional(),
+    location: z.string().max(255).optional(),
+    meeting_link: z
+      .string()
+      .url('Meeting link must be a valid URL')
+      .optional()
+      .or(z.literal('')),
+    agenda: z.string().max(5000).optional(),
+    notes: z.string().max(5000).optional(),
+    notify_attendee: z.boolean().default(true),
+  })
+  .refine(
+    (data) => new Date(data.starts_at) < new Date(data.ends_at),
+    {
+      message: 'Start time must be before end time',
+      path: ['ends_at'],
+    }
+  )
+
+export type AdminCreateBookingInput = z.infer<typeof adminCreateBookingSchema>
+
+// ============================================================================
+// DATABASE SCHEMAS - CONTACT MESSAGES (admin inbox)
+// ============================================================================
+
+export const contactMessageStatusEnum = z.enum([
+  'new',
+  'read',
+  'replied',
+  'archived',
+])
+export type ContactMessageStatus = z.infer<typeof contactMessageStatusEnum>
+
+export const contactMessageSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email(),
+  subject: z.string().nullable(),
+  body: z.string(),
+  user_id: z.string().uuid().nullable(),
+  related_client_id: z.string().uuid().nullable(),
+  status: contactMessageStatusEnum,
+  read_at: z.string().datetime().nullable(),
+  replied_at: z.string().datetime().nullable(),
+  replied_by: z.string().uuid().nullable(),
+  admin_notes: z.string().nullable(),
+  source: z.string().nullable(),
+  user_agent: z.string().nullable(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
+
+/**
+ * Public contact form payload (POST /api/contact). Aggressively bounded so
+ * a bad actor can't dump huge payloads into the inbox.
+ */
+export const createContactMessageSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(120, 'Name must be less than 120 characters'),
+  email: z.string().email('Enter a valid email address'),
+  subject: z
+    .string()
+    .max(200, 'Subject must be less than 200 characters')
+    .optional()
+    .or(z.literal('')),
+  body: z
+    .string()
+    .min(10, 'Please share a bit more detail (10+ characters)')
+    .max(5000, 'Message must be less than 5000 characters'),
+})
+
+export type CreateContactMessageInput = z.infer<typeof createContactMessageSchema>
+
+/**
+ * Admin triage update (PATCH /api/admin/contact-messages/[id]).
+ */
+export const updateContactMessageSchema = z.object({
+  status: contactMessageStatusEnum.optional(),
+  admin_notes: z.string().max(2000).optional().nullable(),
+})
+
+export type UpdateContactMessageInput = z.infer<typeof updateContactMessageSchema>
+export type ContactMessage = z.infer<typeof contactMessageSchema>
 
 // ============================================================================
 // DATABASE SCHEMAS - INVOICES
@@ -269,7 +405,13 @@ export const createInvoiceSchema = z.object({
   due_date: z.string().datetime().optional(),
 })
 
-export const updateInvoiceSchema = createInvoiceSchema.partial()
+export const updateInvoiceSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  amount_cents: z.number().int().positive('Amount must be positive').optional(),
+  currency: z.string().optional(),
+  description: z.string().optional(),
+  due_date: z.string().datetime().optional(),
+})
 
 // ============================================================================
 // PAYMENT INTENT SCHEMAS
@@ -349,7 +491,13 @@ export const createContractSchema = z.object({
   mime_type: z.string(),
 })
 
-export const updateContractSchema = createContractSchema.partial()
+export const updateContractSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  title: z.string().min(1, 'Title is required').max(255).optional(),
+  file_url: z.string().url('Invalid file URL').optional(),
+  file_size_bytes: z.number().int().positive('File size must be positive').optional(),
+  mime_type: z.string().optional(),
+})
 
 // ============================================================================
 // DATABASE SCHEMAS - DELIVERABLES
@@ -375,7 +523,13 @@ export const createDeliverableSchema = z.object({
   due_date: z.string().datetime().optional(),
 })
 
-export const updateDeliverableSchema = createDeliverableSchema.partial()
+export const updateDeliverableSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  title: z.string().min(1, 'Title is required').max(255).optional(),
+  description: z.string().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked']).optional(),
+  due_date: z.string().datetime().optional(),
+})
 
 // ============================================================================
 // DATABASE SCHEMAS - PROJECT MILESTONES
@@ -402,7 +556,14 @@ export const createProjectMilestoneSchema = z.object({
   progress_percent: z.number().int().min(0).max(100).default(0),
 })
 
-export const updateProjectMilestoneSchema = createProjectMilestoneSchema.partial()
+export const updateProjectMilestoneSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID').optional(),
+  title: z.string().min(1, 'Title is required').max(255).optional(),
+  description: z.string().optional(),
+  due_date: z.string().datetime().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'blocked']).optional(),
+  progress_percent: z.number().int().min(0).max(100).optional(),
+})
 
 // ============================================================================
 // DATABASE SCHEMAS - MILESTONE UPDATES
@@ -434,6 +595,62 @@ export const bookingHistorySchema = z.object({
   changed_by: z.string().uuid(),
   created_at: z.string().datetime(),
 })
+
+// ============================================================================
+// CHAT API (POST /api/chat)
+// ============================================================================
+
+const chatMessagePartSchema = z.object({
+  type: z.string().max(64),
+  text: z.string().max(50000).optional(),
+})
+
+/** Message shape accepted from the client / AI SDK round-trip (optional id from UI) */
+export const chatApiMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().max(50000).default(''),
+  id: z.string().max(128).optional(),
+  parts: z.array(chatMessagePartSchema).max(200).optional(),
+})
+
+export const chatPostBodySchema = z
+  .object({
+    messages: z.array(chatApiMessageSchema).min(1).max(100),
+    sessionId: z.string().uuid().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const last = data.messages[data.messages.length - 1]
+    if (!last || last.role !== 'user') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Last message must be from the user',
+        path: ['messages'],
+      })
+      return
+    }
+    if (!last.content.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Last user message must include non-empty content',
+        path: ['messages', data.messages.length - 1, 'content'],
+      })
+    }
+  })
+
+// ============================================================================
+// SEARCH API (GET /api/search)
+// ============================================================================
+
+export const searchQuerySchema = z
+  .object({
+    q: z.string().max(500).optional(),
+    tag: z.string().max(100).optional(),
+    type: z.enum(['blog', 'case-studies', 'all']).optional(),
+  })
+  .refine((d) => Boolean(d.q?.trim()) || Boolean(d.tag?.trim()), {
+    message: 'Query or tag parameter is required',
+    path: ['q'],
+  })
 
 // ============================================================================
 // TYPE EXPORTS
@@ -504,3 +721,6 @@ export type PaymentIntentResponse = z.infer<typeof paymentIntentResponseSchema>
 export type Payment = z.infer<typeof paymentSchema>
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>
 
+// Chat & search
+export type ChatPostBodyInput = z.infer<typeof chatPostBodySchema>
+export type SearchQueryInput = z.infer<typeof searchQuerySchema>

@@ -12,13 +12,23 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
+interface StripeCardSummary {
+  brand: string
+  last4: string
+}
+
+interface PaymentMethodDetailsDisplay {
+  type?: string
+  card?: StripeCardSummary
+}
+
 interface PaymentHistoryItem {
   id: string
   amount: number
   currency: string
   status: string
   created: number
-  payment_method_details?: any
+  payment_method_details?: PaymentMethodDetailsDisplay
   receipt_url?: string
 }
 
@@ -43,7 +53,7 @@ interface InvoiceDetail {
       description: string
       amount: number
       quantity: number
-      price: any
+      price: Record<string, unknown>
     }>
   }
 }
@@ -285,7 +295,8 @@ export default function InvoiceDetailPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {payment.payment_method_details?.type === 'card' && (
+                      {payment.payment_method_details?.type === 'card' &&
+                        payment.payment_method_details.card && (
                         <span>
                           {payment.payment_method_details.card.brand.toUpperCase()} ****
                           {payment.payment_method_details.card.last4}

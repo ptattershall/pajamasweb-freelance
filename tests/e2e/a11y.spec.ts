@@ -5,7 +5,7 @@ const keyRoutes = [
   { path: '/', name: 'Home' },
   { path: '/services', name: 'Services' },
   { path: '/blog', name: 'Blog' },
-  { path: '/book', name: 'Book' },
+  { path: '/chat', name: 'Chat' },
 ];
 
 test.describe('Accessibility (axe)', () => {

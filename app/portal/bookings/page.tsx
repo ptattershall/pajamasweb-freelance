@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CalendarView } from '@/components/calendar-view'
 import { TimezoneSelector } from '@/components/TimezoneSelector'
+import { GOOGLE_CALENDAR_BOOKING_URL } from '@/lib/calendar-links'
 import {
   getStoredTimezone,
   formatDateInTimezone,
@@ -103,9 +104,9 @@ export default function BookingsPage() {
               Calendar
             </Button>
           </div>
-          <Link href="/book">
-            <Button>Schedule Meeting</Button>
-          </Link>
+          <a href={GOOGLE_CALENDAR_BOOKING_URL} target="_blank" rel="noopener noreferrer">
+            <Button>Open Google Calendar</Button>
+          </a>
         </div>
       </div>
 

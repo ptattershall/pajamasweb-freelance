@@ -7,10 +7,10 @@
  * Security: Rate-limited by IP; generic error messages; no user data in response.
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyEmail } from '@/lib/auth-service';
 import { checkIpRateLimit, getClientIp, getRateLimitHeaders, rateLimiters } from '@/lib/rate-limit';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -35,10 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing or invalid authorization' }, { status: 401 });
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServerSupabaseClient();
 
   const {
     data: { user },

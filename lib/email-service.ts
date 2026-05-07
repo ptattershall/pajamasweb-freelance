@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { generateIcsBuffer } from './ics-utils';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -180,6 +181,277 @@ function generateCancellationHtml(booking: BookingEmailData): string {
       <p>If you'd like to reschedule, please book another time.</p>
     </div>
   `;
+}
+
+/**
+ * Admin-scheduled meeting email data
+ *
+ * Sent when an OWNER schedules a meeting on behalf of a client/prospect.
+ * Includes a calendar (.ics) attachment so the recipient can add the event
+ * to their own calendar (Google, Apple, Outlook, etc.).
+ */
+export interface AdminScheduledMeetingEmailData {
+  id: string;
+  title: string;
+  startsAt: Date;
+  endsAt: Date;
+  attendeeEmail: string;
+  attendeeName?: string | null;
+  organizerName?: string | null;
+  organizerEmail?: string | null;
+  description?: string | null;
+  agenda?: string | null;
+  location?: string | null;
+  meetingLink?: string | null;
+}
+
+/**
+ * Send a meeting invitation that an admin scheduled for the recipient.
+ * Always includes an ICS attachment so the user can add it to any calendar.
+ */
+export async function sendAdminScheduledMeeting(meeting: AdminScheduledMeetingEmailData) {
+  try {
+    const ics = generateIcsBuffer({
+      id: meeting.id,
+      title: meeting.title,
+      description: meeting.description,
+      startsAt: meeting.startsAt,
+      endsAt: meeting.endsAt,
+      location: meeting.location,
+      meetingLink: meeting.meetingLink,
+      organizerEmail: meeting.organizerEmail,
+      organizerName: meeting.organizerName,
+      attendeeEmail: meeting.attendeeEmail,
+      attendeeName: meeting.attendeeName,
+      status: 'confirmed',
+    });
+
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'meetings@yourdomain.com',
+      to: meeting.attendeeEmail,
+      replyTo: meeting.organizerEmail || undefined,
+      subject: `Meeting scheduled: ${meeting.title}`,
+      html: generateAdminScheduledMeetingHtml(meeting),
+      attachments: [
+        {
+          filename: 'invite.ics',
+          content: ics,
+          contentType: 'text/calendar; charset=utf-8; method=PUBLISH',
+        },
+      ],
+      tags: [
+        { name: 'category', value: 'admin_scheduled_meeting' },
+        { name: 'booking_id', value: meeting.id },
+      ],
+    });
+
+    if (result.error) {
+      throw new Error(`Failed to send admin-scheduled meeting email: ${result.error.message}`);
+    }
+
+    console.log(`Admin-scheduled meeting email sent to ${meeting.attendeeEmail}`, result.data);
+    return result.data;
+  } catch (error) {
+    console.error('Error sending admin-scheduled meeting email:', error);
+    throw error;
+  }
+}
+
+function generateAdminScheduledMeetingHtml(meeting: AdminScheduledMeetingEmailData): string {
+  const startFormatted = meeting.startsAt.toLocaleString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  });
+  const durationMin = Math.round(
+    (meeting.endsAt.getTime() - meeting.startsAt.getTime()) / 60000
+  );
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 32px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Meeting Scheduled</h1>
+      </div>
+
+      <div style="background: #f9fafb; padding: 32px 20px; border-radius: 0 0 8px 8px;">
+        <p style="font-size: 16px; margin: 0 0 16px;">Hi ${meeting.attendeeName || 'there'},</p>
+
+        <p style="font-size: 16px; margin: 0 0 24px;">
+          ${meeting.organizerName || 'PajamasWeb'} has scheduled a meeting with you. The calendar invite (.ics) is attached &mdash; you can open it to add this meeting to Google Calendar, Apple Calendar, or Outlook.
+        </p>
+
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600;">${escapeHtml(meeting.title)}</p>
+          <p style="margin: 0 0 8px; color: #4b5563;">📅 ${escapeHtml(startFormatted)}</p>
+          <p style="margin: 0 0 8px; color: #4b5563;">⏱️ Duration: ${durationMin} minutes</p>
+          ${meeting.location ? `<p style="margin: 0 0 8px; color: #4b5563;">📍 ${escapeHtml(meeting.location)}</p>` : ''}
+          ${
+            meeting.meetingLink
+              ? `<p style="margin: 12px 0 0;">
+                  <a href="${meeting.meetingLink}" style="color: #2563eb; text-decoration: underline;">Join meeting link</a>
+                </p>`
+              : ''
+          }
+        </div>
+
+        ${
+          meeting.agenda
+            ? `<div style="margin-bottom: 24px;">
+                <p style="font-size: 14px; font-weight: 600; margin: 0 0 8px;">Agenda</p>
+                <div style="font-size: 14px; color: #4b5563; white-space: pre-wrap;">${escapeHtml(meeting.agenda)}</div>
+              </div>`
+            : ''
+        }
+
+        ${
+          meeting.description
+            ? `<div style="margin-bottom: 24px;">
+                <p style="font-size: 14px; font-weight: 600; margin: 0 0 8px;">Notes</p>
+                <div style="font-size: 14px; color: #4b5563; white-space: pre-wrap;">${escapeHtml(meeting.description)}</div>
+              </div>`
+            : ''
+        }
+
+        <p style="font-size: 14px; color: #6b7280; margin-top: 24px;">
+          Need to make changes? Just reply to this email and ${meeting.organizerName || 'we'} will follow up.
+        </p>
+      </div>
+
+      <div style="text-align: center; padding: 16px; font-size: 12px; color: #9ca3af;">
+        <p style="margin: 0;">© ${new Date().getFullYear()} PajamasWeb. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Notify admin that a new contact message arrived.
+ *
+ * Sends to ADMIN_NOTIFICATION_EMAIL (or RESEND_FROM_EMAIL as fallback) and
+ * sets `replyTo` to the sender's email so hitting Reply lands directly in
+ * a thread with the customer.
+ */
+export interface AdminContactNotificationData {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string | null;
+  body: string;
+  isAuthenticated: boolean;
+  receivedAt: Date;
+}
+
+export async function sendAdminContactNotification(
+  data: AdminContactNotificationData
+) {
+  try {
+    const adminTo =
+      process.env.ADMIN_NOTIFICATION_EMAIL ||
+      process.env.RESEND_FROM_EMAIL ||
+      'info@pajamasweb.com';
+
+    const subjectPrefix = data.subject ? data.subject : 'New message';
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com',
+      to: adminTo,
+      replyTo: data.email,
+      subject: `[Inbox] ${subjectPrefix} — ${data.name}`,
+      html: generateAdminContactNotificationHtml(data),
+      tags: [
+        { name: 'category', value: 'contact_message_admin' },
+        { name: 'message_id', value: data.id },
+      ],
+    });
+
+    if (result.error) {
+      throw new Error(
+        `Failed to send admin contact notification: ${result.error.message}`
+      );
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error sending admin contact notification:', error);
+    throw error;
+  }
+}
+
+function generateAdminContactNotificationHtml(
+  data: AdminContactNotificationData
+): string {
+  const inboxUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/admin/messages/${data.id}`;
+  const received = data.receivedAt.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  });
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+      <div style="background: #0f172a; padding: 24px 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 20px;">New contact message</h1>
+        <p style="color: #cbd5e1; margin: 4px 0 0; font-size: 13px;">${escapeContactHtml(received)}</p>
+      </div>
+
+      <div style="background: #f9fafb; padding: 24px 20px; border-radius: 0 0 8px 8px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+          <tr>
+            <td style="padding: 6px 0; color: #6b7280; width: 90px;">From</td>
+            <td style="padding: 6px 0;">
+              <strong>${escapeContactHtml(data.name)}</strong>
+              &lt;<a href="mailto:${data.email}" style="color: #2563eb;">${escapeContactHtml(data.email)}</a>&gt;
+              ${data.isAuthenticated ? '<span style="margin-left: 8px; padding: 2px 6px; font-size: 11px; background: #dcfce7; color: #166534; border-radius: 4px;">Signed in</span>' : ''}
+            </td>
+          </tr>
+          ${
+            data.subject
+              ? `<tr>
+                  <td style="padding: 6px 0; color: #6b7280;">Subject</td>
+                  <td style="padding: 6px 0;">${escapeContactHtml(data.subject)}</td>
+                </tr>`
+              : ''
+          }
+        </table>
+
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; white-space: pre-wrap; font-size: 14px; line-height: 1.5;">
+${escapeContactHtml(data.body)}
+        </div>
+
+        <p style="margin-top: 20px; font-size: 13px; color: #6b7280;">
+          Reply to this email to respond directly, or
+          <a href="${inboxUrl}" style="color: #2563eb;">open the inbox</a>
+          to triage.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function escapeContactHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /**

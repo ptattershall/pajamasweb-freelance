@@ -42,6 +42,16 @@ export default function AdminLayout({
               Payments
             </Button>
           </Link>
+          <Link href="/admin/bookings">
+            <Button variant="ghost" className="w-full justify-start">
+              Meetings
+            </Button>
+          </Link>
+          <Link href="/admin/messages">
+            <Button variant="ghost" className="w-full justify-start">
+              Inbox
+            </Button>
+          </Link>
 
           {/* Content Management Section */}
           <div className="pt-4 pb-2">

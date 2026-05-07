@@ -10,7 +10,7 @@ const createPaymentIntentSchema = z.object({
   userEmail: z.string().email('Valid email is required'),
   userName: z.string().optional(),
   description: z.string().optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 })
 
 export async function POST(request: NextRequest) {

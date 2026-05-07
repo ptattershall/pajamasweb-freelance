@@ -5,8 +5,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Calendar, MapPin, Video, Clock, ArrowLeft, Download, X, RefreshCw } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { Calendar, MapPin, Video, Clock, ArrowLeft, Download } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,10 +32,8 @@ interface Booking {
 
 export default function BookingDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
-  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -102,35 +100,6 @@ export default function BookingDetailPage() {
     } catch (error) {
       console.error('Error downloading ICS:', error)
     }
-  }
-
-  const handleCancel = async () => {
-    if (!booking || !confirm('Are you sure you want to cancel this booking?')) return
-    
-    setCancelling(true)
-    try {
-      const response = await fetch(`/api/portal/bookings/${booking.id}/cancel`, {
-        method: 'POST',
-      })
-      
-      if (response.ok) {
-        alert('Booking cancelled successfully')
-        router.push('/portal/bookings')
-      } else {
-        alert('Failed to cancel booking')
-      }
-    } catch (error) {
-      console.error('Error cancelling booking:', error)
-      alert('Error cancelling booking')
-    } finally {
-      setCancelling(false)
-    }
-  }
-
-  const handleReschedule = () => {
-    if (!booking) return
-    // Redirect to Cal.com reschedule page
-    window.open(`https://cal.com/reschedule/${booking.external_id}`, '_blank')
   }
 
   if (loading) {
@@ -277,23 +246,6 @@ export default function BookingDetailPage() {
               <Download className="mr-2 h-4 w-4" />
               Download ICS
             </Button>
-
-            {!isPastBooking && !isCancelled && (
-              <>
-                <Button onClick={handleReschedule} variant="outline">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Reschedule
-                </Button>
-                <Button
-                  onClick={handleCancel}
-                  variant="destructive"
-                  disabled={cancelling}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  {cancelling ? 'Cancelling...' : 'Cancel Booking'}
-                </Button>
-              </>
-            )}
           </div>
 
           {/* Booking Info */}

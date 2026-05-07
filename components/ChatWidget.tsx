@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Send, MessageCircle, ThumbsUp, ThumbsDown, Trash2, History, Search } from 'lucide-react';
@@ -32,7 +33,9 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isAuthenticated = Boolean(token);
 
   const filteredMessages =
     searchQuery.trim() === ''
@@ -63,7 +66,12 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      setAuthError('Please sign in to chat with the assistant.');
+      return;
+    }
     if (!input.trim() || isLoading) return;
+    setAuthError(null);
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -88,7 +96,13 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to get response');
+      if (!response.ok) {
+        if (response.status === 401) {
+          setAuthError('Your session expired. Please sign in again.');
+          throw new Error('Unauthorized');
+        }
+        throw new Error('Failed to get response');
+      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No response body');
@@ -111,6 +125,7 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
       }]);
     } catch (error) {
       console.error('Chat error:', error);
+      setAuthError((previous) => previous ?? 'Unable to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -122,14 +137,18 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
   }, [messages]);
 
   useEffect(() => {
-    // Get auth token from localStorage or session
+    // Get auth token from current session
     const getToken = async () => {
       try {
         const response = await fetch('/api/auth/token');
-        const data = await response.json();
-        setToken(data.token);
+        const data = await response.json() as { token?: string | null };
+        const nextToken = data?.token ?? null;
+        setToken(nextToken);
+        setAuthError(nextToken ? null : 'Please sign in to start chatting.');
       } catch (error) {
         console.error('Error getting auth token:', error);
+        setToken(null);
+        setAuthError('Please sign in to start chatting.');
       }
     };
     getToken();
@@ -362,17 +381,26 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
       </div>
 
       {/* Input */}
+      {!isAuthenticated && (
+        <div className="border-t px-4 pt-3 text-sm text-amber-800 bg-amber-50 border-amber-200">
+          Sign in is required to use chat.{' '}
+          <Link href="/auth/signin" className="font-medium underline">
+            Go to sign in
+          </Link>
+          .
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
         <Input
           value={input}
           onChange={handleInputChange}
-          placeholder="Type your message..."
-          disabled={isLoading}
+          placeholder={isAuthenticated ? 'Type your message...' : 'Sign in to start chatting'}
+          disabled={isLoading || !isAuthenticated}
           className="flex-1"
         />
         <Button
           type="submit"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || !input.trim() || !isAuthenticated}
           size="sm"
           className="min-w-[44px] min-h-[44px] shrink-0"
           aria-label="Send message"
@@ -380,6 +408,11 @@ export default function ChatWidget({ sessionId, onClose }: ChatWidgetProps) {
           <Send className="w-4 h-4" />
         </Button>
       </form>
+      {authError && (
+        <p className="px-4 pb-3 text-xs text-red-600" role="status" aria-live="polite">
+          {authError}
+        </p>
+      )}
     </div>
   );
 }

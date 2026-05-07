@@ -15,7 +15,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyEmail } from '@/lib/auth-service';
 
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const PUBLISHABLE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type') as EmailOtpType | null;
   const nextParam = searchParams.get('next') ?? '/portal';
 
-  if (!SUPABASE_URL || !ANON_KEY) {
+  if (!SUPABASE_URL || !PUBLISHABLE_KEY) {
     console.error('Auth callback: missing Supabase env');
     return NextResponse.redirect(new URL('/auth/signin?error=config', request.url));
   }
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
     return redirectToError('invalid_type');
   }
 
-  const supabase = createClient(SUPABASE_URL, ANON_KEY);
+  const supabase = createClient(SUPABASE_URL, PUBLISHABLE_KEY);
   const { data, error } = await supabase.auth.verifyOtp({
     token_hash,
     type,

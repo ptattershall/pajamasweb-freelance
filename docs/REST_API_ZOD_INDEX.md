@@ -1,113 +1,59 @@
 # REST API + Zod Implementation Index
 
-## 📚 Documentation Files
+Historical deep-dives for the REST + Zod work live under **[archive/](./archive/)**. Canonical, maintained references: **[ZOD_USAGE_EXAMPLES.md](./ZOD_USAGE_EXAMPLES.md)** and **[ZOD_VALIDATION_IMPLEMENTATION.md](./ZOD_VALIDATION_IMPLEMENTATION.md)** (repo root `docs/`).
 
-### Getting Started
+## Documentation files
 
-- **[REST_API_ZOD_GUIDE.md](REST_API_ZOD_GUIDE.md)** ⭐ START HERE
-  - Architecture overview
-  - Why this approach
-  - Key files and implementation steps
+### Getting started (archive)
 
-### Implementation Details
+- **[REST_API_ZOD_GUIDE.md](./archive/rest-api-zod/REST_API_ZOD_GUIDE.md)** — architecture and approach
+- **[ZOD_USAGE_EXAMPLES.md](./ZOD_USAGE_EXAMPLES.md)** — practical examples (maintained at docs root)
 
-- **[ZOD_IMPLEMENTATION_COMPLETE.md](ZOD_IMPLEMENTATION_COMPLETE.md)**
-  - What's been completed
-  - How to use
-  - Next steps
+### Implementation details (archive)
 
-### Code Examples
+- **[ZOD_IMPLEMENTATION_COMPLETE.md](./archive/ZOD_IMPLEMENTATION_COMPLETE.md)** — session snapshot
+- **[ZOD_VALIDATION_IMPLEMENTATION.md](./ZOD_VALIDATION_IMPLEMENTATION.md)** — current summary of validated endpoints
 
-- **[ZOD_USAGE_EXAMPLES.md](ZOD_USAGE_EXAMPLES.md)**
-  - 5 practical code examples
-  - Creating bookings
-  - React components
-  - Form validation
-  - Service layer integration
-  - Error handling
+### Reference (archive)
 
-### Reference
+- **[REST_API_ZOD_IMPLEMENTATION_SUMMARY.md](./archive/rest-api-zod/REST_API_ZOD_IMPLEMENTATION_SUMMARY.md)**
 
-- **[REST_API_ZOD_IMPLEMENTATION_SUMMARY.md](REST_API_ZOD_IMPLEMENTATION_SUMMARY.md)**
-  - Complete reference guide
-  - All benefits listed
-  - Migration path
-  - File structure
+### Session tracking (archive)
 
-### Session Tracking
+- **[SESSION2_COMPLETION_SUMMARY.md](./archive/SESSION2_COMPLETION_SUMMARY.md)**
+- **[PRISMA_IMPLEMENTATION_TRACKING.md](./archive/prisma/PRISMA_IMPLEMENTATION_TRACKING.md)**
 
-- **[SESSION2_COMPLETION_SUMMARY.md](SESSION2_COMPLETION_SUMMARY.md)**
-  - What was accomplished
-  - Files created/modified
-  - Quick start guide
-
-- **[PRISMA_IMPLEMENTATION_TRACKING.md](PRISMA_IMPLEMENTATION_TRACKING.md)**
-  - Multi-session tracking
-  - Session 1 & 2 notes
-  - Root cause analysis
-
-## 💻 Code Files
+## Code files
 
 ### Schemas
 
-- **[lib/validation-schemas.ts](../lib/validation-schemas.ts)**
-  - 8 database table schemas
-  - Input/output validation
-  - TypeScript type exports
-  - 358 lines total
+- **[lib/validation-schemas.ts](../lib/validation-schemas.ts)** — shared Zod schemas for auth, uploads, milestones, notifications, and API bodies
 
-### Query Helpers
+### Query helpers
 
-- **[lib/query-helpers.ts](../lib/query-helpers.ts)**
-  - Type-safe query functions
-  - Profile, Booking, Invoice queries
-  - Automatic Zod validation
-  - 173 lines total
+- **[lib/query-helpers.ts](../lib/query-helpers.ts)** — typed reads with Zod parsing (used where integrated, e.g. chat tools)
 
-## 🎯 Quick Navigation
+## Quick navigation
 
-### I want to
+| Goal | Document |
+|------|----------|
+| Examples at docs root | [ZOD_USAGE_EXAMPLES.md](./ZOD_USAGE_EXAMPLES.md) |
+| What is validated today | [ZOD_VALIDATION_IMPLEMENTATION.md](./ZOD_VALIDATION_IMPLEMENTATION.md) |
+| Historical REST/Zod guide | [archive/rest-api-zod/REST_API_ZOD_GUIDE.md](./archive/rest-api-zod/REST_API_ZOD_GUIDE.md) |
 
-**Get started quickly**
-→ Read [REST_API_ZOD_GUIDE.md](REST_API_ZOD_GUIDE.md)
+## Implementation status
 
-**See code examples**
-→ Check [ZOD_USAGE_EXAMPLES.md](ZOD_USAGE_EXAMPLES.md)
+| Component | Status | Notes |
+|-----------|--------|--------|
+| Zod schemas | In use | `lib/validation-schemas.ts`; extend as new inputs are added |
+| Query helpers | Available | `lib/query-helpers.ts`; adopt in services as needed |
+| API routes | Partial | Same as below plus **POST `/api/chat`** (body) and **GET `/api/search`** (query). Many read-only portal/admin routes still use ad hoc checks. |
+| Root docs | Maintained | This file + ZOD_* at docs root; long-form history in `archive/` |
 
-**Understand the implementation**
-→ Review [ZOD_IMPLEMENTATION_COMPLETE.md](ZOD_IMPLEMENTATION_COMPLETE.md)
+## Key features
 
-**Use in my component**
-→ Import from `lib/query-helpers.ts` and `lib/validation-schemas.ts`
+- Type-safe parsing where schemas are applied  
+- Consistent validation error shape on those routes  
+- Central schemas for shared shapes  
 
-**See what was done**
-→ Read [SESSION2_COMPLETION_SUMMARY.md](SESSION2_COMPLETION_SUMMARY.md)
-
-**Track progress**
-→ Check [PRISMA_IMPLEMENTATION_TRACKING.md](PRISMA_IMPLEMENTATION_TRACKING.md)
-
-## 📊 Implementation Status
-
-| Component | Status | File |
-|-----------|--------|------|
-| Zod Schemas | ✅ Complete | `lib/validation-schemas.ts` |
-| Query Helpers | ✅ Complete | `lib/query-helpers.ts` |
-| Documentation | ✅ Complete | `docs/REST_API_ZOD_*.md` |
-| Service Integration | ⏳ Next | `lib/*-service.ts` |
-| API Routes | ⏳ Next | `app/api/*` |
-| Components | ⏳ Next | `app/**/*.tsx` |
-
-## 🚀 Key Features
-
-✅ Type-safe queries  
-✅ Runtime validation  
-✅ Full TypeScript support  
-✅ Production-ready  
-✅ Free tier compatible  
-✅ Easy to extend  
-✅ Clear error messages  
-✅ IDE autocomplete  
-
-## 📞 Support
-
-All documentation is self-contained. Check the relevant file for your use case!
+For operational security and Supabase setup, see [SECURITY_AND_SUPABASE_CONFIG.md](./SECURITY_AND_SUPABASE_CONFIG.md).

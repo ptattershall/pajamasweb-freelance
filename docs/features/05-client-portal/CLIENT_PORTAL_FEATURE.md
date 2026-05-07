@@ -19,8 +19,8 @@ Authenticated client dashboard for viewing invoices, contracts, bookings, delive
    - Added `getAuthenticatedUser()` helper function in `lib/auth-service.ts`
    - All API routes now validate session cookies before processing requests
 
-2. **Middleware Protection**
-   - Extended `middleware.ts` to protect all `/portal/*` routes
+2. **Proxy protection (Next.js 16)**
+   - Extended **[proxy.ts](../../../proxy.ts)** (`export async function proxy`) to protect `/portal/*` routes (see `config.matcher`)
    - Unauthenticated users automatically redirected to signin page
    - Public routes (signin, signup, password reset) properly excluded
 
@@ -39,7 +39,7 @@ Authenticated client dashboard for viewing invoices, contracts, bookings, delive
 
 **Files Modified:**
 
-- `middleware.ts` - Added portal route protection
+- `proxy.ts` - Portal (and admin) route protection via Next.js 16 proxy
 - `lib/auth-service.ts` - Added session helpers and logout
 - `app/api/auth/signout/route.ts` - New logout endpoint
 - `app/portal/layout.tsx` - Added logout functionality
@@ -965,7 +965,7 @@ if (authError || !user) {
 
 **Files Updated:**
 
-- ✅ `middleware.ts` - Added portal route protection with Supabase session validation
+- ✅ `proxy.ts` - Portal route protection with Supabase session validation (Next.js 16 proxy)
 - ✅ `lib/auth-service.ts` - Added `getAuthenticatedUser()` helper and `signOut()` function
 - ✅ `app/api/auth/signout/route.ts` - New logout endpoint
 - ✅ `app/portal/layout.tsx` - Added proper logout functionality
@@ -1137,7 +1137,7 @@ All database migrations have been created and are ready to run:
 
 1. **✅ COMPLETED: Authentication Security**
    - ✅ Replaced `x-user-id` headers with proper Supabase session management
-   - ✅ Implemented authentication middleware for all portal routes
+   - ✅ Implemented authentication in **proxy.ts** for all portal routes (Next.js 16)
    - ✅ Added logout functionality
    - ✅ Session validation on all API requests
 

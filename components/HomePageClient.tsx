@@ -87,12 +87,12 @@ export function HomePageClient() {
             >
               Sign In
             </Link>
-            <a
-              href="#contact"
+            <Link
+              href="/contact"
               className="inline-flex items-center justify-center min-h-[44px] rounded-lg bg-black px-4 py-2 font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             >
               Contact
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -149,13 +149,13 @@ export function HomePageClient() {
               >
                 Sign In
               </Link>
-              <a
-                href="#contact"
+              <Link
+                href="/contact"
                 className="block py-3 text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Contact
-              </a>
+              </Link>
             </div>
           </div>
         )}
@@ -238,20 +238,12 @@ export function HomePageClient() {
             Let&apos;s discuss your project and see how I can help bring your vision to life.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <a
-              href="mailto:info@pajamasweb.com"
+            <Link
+              href="/contact"
               className="inline-flex items-center justify-center rounded-lg bg-black px-8 py-3 font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             >
-              Send Me an Email
-            </a>
-            <a
-              href="https://cal.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-black px-8 py-3 font-semibold text-black transition-colors hover:bg-black hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black"
-            >
-              Book a Call
-            </a>
+              Send a Message
+            </Link>
           </div>
         </div>
       </section>
@@ -321,19 +313,11 @@ export function HomePageClient() {
               <ul className="space-y-2">
                 <li>
                   <Link
-                    href="/book"
-                    className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
-                  >
-                    Book a Call
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="#contact"
+                    href="/contact"
                     className="text-sm text-zinc-600 transition-colors hover:text-black dark:text-zinc-400 dark:hover:text-white"
                   >
                     Contact
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

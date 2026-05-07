@@ -5,7 +5,7 @@
  * Usage: node scripts/test-webhook.js
  */
 
-const crypto = require('crypto');
+import crypto from 'node:crypto';
 
 // Get secret from environment
 const secret = process.env.CALCOM_WEBHOOK_SECRET;

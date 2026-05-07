@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { signInWithEmail } from '@/lib/supabase'
+import { createClient } from '@/utils/supabase/client'
 
 function LoginForm() {
   const router = useRouter()
@@ -25,15 +25,17 @@ function LoginForm() {
     setError(null)
 
     try {
-      const { session } = await signInWithEmail(email, password)
+      const supabase = createClient()
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      if (session) {
-        // Set auth token in cookie
-        document.cookie = `auth-token=${session.access_token}; path=/; max-age=3600`
-
-        // Redirect to admin dashboard
-        router.push(redirect)
+      if (signInError || !data.session) {
+        throw new Error(signInError?.message || 'Login failed')
       }
+
+      router.push(redirect)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

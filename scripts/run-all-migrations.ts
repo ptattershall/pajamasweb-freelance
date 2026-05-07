@@ -32,6 +32,12 @@ const migrations = [
   '011_milestone_notifications.sql',
   '012_subscriptions_table.sql',
   '013_subscriptions_client_id_nullable.sql',
+  '014_profiles_roles_sales_dev_invitation_role.sql',
+  '015_client_assignments.sql',
+  '016_bookings_assigned_user_id.sql',
+  '017_rotation_tables.sql',
+  '018_admin_scheduled_bookings.sql',
+  '019_contact_messages.sql',
 ]
 
 const expectedTables = [
@@ -44,6 +50,8 @@ const expectedTables = [
   'project_milestones',
   'milestone_updates',
   'subscriptions',
+  'client_assignments',
+  'contact_messages',
 ]
 
 async function runMigrations() {

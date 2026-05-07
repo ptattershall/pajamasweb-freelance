@@ -32,7 +32,7 @@ export default function CheckoutCancelPage() {
           </p>
 
           <p className="mb-6 text-sm text-slate-600">
-            If you have any questions or need assistance, please don't hesitate to contact us.
+            If you have any questions or need assistance, please don&apos;t hesitate to contact us.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">

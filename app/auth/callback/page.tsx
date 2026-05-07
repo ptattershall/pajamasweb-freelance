@@ -8,12 +8,12 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClientSupabaseClient } from '@/lib/auth-service';
+import { createClient } from '@/utils/supabase/client';
 import { Loader2 } from 'lucide-react';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -34,7 +34,7 @@ export default function AuthCallbackPage() {
     }
 
     const handleCallback = async () => {
-      const supabase = createClientSupabaseClient();
+      const supabase = createClient();
 
       const hash = typeof window !== 'undefined' ? window.location.hash : '';
       const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
@@ -126,5 +126,20 @@ export default function AuthCallbackPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden />
+          <p className="text-muted-foreground">Loading…</p>
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

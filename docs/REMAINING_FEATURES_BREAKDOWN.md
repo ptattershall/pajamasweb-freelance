@@ -175,6 +175,41 @@
 
 ---
 
+## Feature 05: Client Portal (MVP + invitations)
+
+**Status:** MVP COMPLETE (dashboard, billing, projects, assignments) | **Docs:** [features/05-client-portal/00_START_HERE.md](./features/05-client-portal/00_START_HERE.md), [CLIENT_PORTAL_FEATURE.md](./features/05-client-portal/CLIENT_PORTAL_FEATURE.md), [SECURITY_AND_SUPABASE_CONFIG.md](./SECURITY_AND_SUPABASE_CONFIG.md)
+
+### What was built
+
+**Access & auth**
+
+- [x] Admin-controlled invitations *(migrations + `app/api/admin/invitations/*`, accept/validate routes, email flow)*
+- [x] Portal route protection via **[proxy.ts](../proxy.ts)** (Next.js 16 proxy; session cookie + Supabase `getUser`, CSRF cookie on matched routes)
+- [x] Sign-in / sign-out / session APIs *(e.g. `app/api/auth/*`, `app/api/portal/profile`)*
+
+**Client & staff experiences**
+
+- [x] Dashboard with real aggregates *(`app/api/portal/dashboard`, portal home)*
+- [x] Invoices, payments, subscriptions *(portal pages + `app/api/portal/invoices`, payments, subscriptions routes)*
+- [x] Bookings *(portal list/calendar; cancel/ICS APIs; Cal.com sync elsewhere in Feature 03)*
+- [x] Deliverables & contracts *(list + signed download routes)*
+- [x] Milestones & project overview *(portal milestones, projects overview API)*
+- [x] Chat history & analytics *(portal chat-history routes, analytics)*
+- [x] Profile & avatar *(`app/api/portal/profile`, `app/api/portal/avatar`)*
+- [x] Notifications *(read/unread portal notification APIs)*
+
+**Sales / dev roles**
+
+- [x] Assigned clients & booking views for SALES/DEV *(e.g. `/portal/assigned-clients`, `app/api/portal/assigned-clients`, booking filters by `assigned_user_id`)*
+- [x] Admin assignment & rotation tooling *(e.g. `app/api/admin/assignments/*`, `app/api/admin/rotation/*`)*
+
+### Follow-ups (optional / product)
+
+- [ ] Hardening: extend shared Zod schemas to every portal/admin handler that still uses ad hoc parsing (see [REST_API_ZOD_INDEX.md](./REST_API_ZOD_INDEX.md))
+- [ ] Ongoing UAT per [PRE_LAUNCH_QA.md](./PRE_LAUNCH_QA.md)
+
+---
+
 ## Feature 06: Foundation & Infrastructure
 
 **Status:** PHASES 1–5 COMPLETE (security headers, RLS in migrations, email verification flow, auth callback security) | **Estimated Time:** 2-3 weeks
@@ -267,8 +302,8 @@
 
 **Phase 6: Pre-Launch QA**
 
-- [x] Cross-browser testing *(Checklist in docs/PRE_LAUNCH_QA.md)*
-- [x] Performance testing *(Lighthouse in checklist; docs/PRE_LAUNCH_QA.md)*
-- [x] Security testing *(Checklist: headers, auth, Stripe webhook, RLS; docs/SECURITY_AND_SUPABASE_CONFIG.md, docs/PRODUCTION_VERIFICATION.md)*
-- [x] Load testing *(Optional; see docs/PRE_LAUNCH_QA.md)*
-- [x] User acceptance testing *(Checklist + optional UAT script; docs/PRE_LAUNCH_QA.md)*
+- [x] Cross-browser testing *(Checklist authored in [PRE_LAUNCH_QA.md](./PRE_LAUNCH_QA.md); run and tick boxes before launch — not the same as “already tested”)*
+- [x] Performance testing *(Lighthouse steps in [PRE_LAUNCH_QA.md](./PRE_LAUNCH_QA.md))*
+- [x] Security testing *(Checklist pointers: [SECURITY_AND_SUPABASE_CONFIG.md](./SECURITY_AND_SUPABASE_CONFIG.md), [PRODUCTION_VERIFICATION.md](./PRODUCTION_VERIFICATION.md))*
+- [x] Load testing *(Optional; see [PRE_LAUNCH_QA.md](./PRE_LAUNCH_QA.md))*
+- [x] User acceptance testing *(Checklist + optional UAT script; [PRE_LAUNCH_QA.md](./PRE_LAUNCH_QA.md))*

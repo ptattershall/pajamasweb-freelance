@@ -254,7 +254,7 @@ function DepositCheckoutContent() {
                     className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <p className="mt-1 text-xs text-slate-500">
-                    We'll send your receipt to this email address
+                    We&apos;ll send your receipt to this email address
                   </p>
                 </div>
 

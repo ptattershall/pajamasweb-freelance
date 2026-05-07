@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent } from '@/components/ui/card'
+import { GOOGLE_CALENDAR_BOOKING_URL } from '@/lib/calendar-links'
 
 interface Invoice {
   id: string
@@ -79,9 +80,9 @@ export default function InvoicesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold">Invoices</h1>
-        <Link href="/book">
-          <Button>Schedule Meeting</Button>
-        </Link>
+        <a href={GOOGLE_CALENDAR_BOOKING_URL} target="_blank" rel="noopener noreferrer">
+          <Button>Open Google Calendar</Button>
+        </a>
       </div>
 
       {/* Filter Tabs */}

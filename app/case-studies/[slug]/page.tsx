@@ -93,7 +93,7 @@ export default async function CaseStudyPage(props: CaseStudyPageProps) {
   ])
 
   // Find hero image
-  const heroImage = images?.find((img: any) => img.is_hero)
+  const heroImage = images?.find((img: CaseStudyImage) => img.is_hero)
 
   // Fetch embedding for related case studies
   let embedding: number[] | undefined

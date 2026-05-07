@@ -5,7 +5,9 @@ let supabaseClient: ReturnType<typeof createClient> | null = null
 function getSupabaseClient() {
   if (!supabaseClient) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseAnonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error('Missing Supabase environment variables')
@@ -631,7 +633,9 @@ export async function getPaymentsByUser(userId: string) {
   return data
 }
 
-export async function getPaymentByIntentId(intentId: string) {
+export async function getPaymentByIntentId(
+  intentId: string
+): Promise<Payment | null> {
   const { data, error } = await supabase
     .from('payments')
     .select('*')
@@ -643,10 +647,10 @@ export async function getPaymentByIntentId(intentId: string) {
     throw error
   }
 
-  return data || null
+  return (data as Payment | null) ?? null
 }
 
-export async function getPaymentById(id: string) {
+export async function getPaymentById(id: string): Promise<Payment | null> {
   const { data, error } = await supabase
     .from('payments')
     .select('*')
@@ -658,7 +662,7 @@ export async function getPaymentById(id: string) {
     throw error
   }
 
-  return data || null
+  return (data as Payment | null) ?? null
 }
 
 export async function getPaymentsByUserWithFilters(
