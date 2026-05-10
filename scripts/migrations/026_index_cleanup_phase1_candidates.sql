@@ -1,0 +1,87 @@
+-- 026: Phase 1 unused-index cleanup candidates (review-only)
+--
+-- Purpose:
+-- - Capture conservative duplicate-index candidates for later cleanup.
+-- - This file is intentionally NON-DESTRUCTIVE by default.
+-- - Drop statements are commented out; uncomment only after validation.
+--
+-- Validation checklist before any DROP:
+-- 1) Confirm duplicate/overlap with \d+ <table> or pg_indexes.
+-- 2) Check recent usage in pg_stat_user_indexes over a representative period.
+-- 3) Run EXPLAIN on critical queries that filter by these columns.
+-- 4) Apply in low-traffic window and monitor query latency.
+--
+-- NOTE:
+-- - Prefer dropping one index at a time in production.
+-- - If you need non-blocking behavior on large tables, use DROP INDEX CONCURRENTLY
+--   in a standalone statement (not inside an explicit transaction block).
+
+-- ---------------------------------------------------------------------------
+-- Candidate A: bookings.external_id duplicate index
+-- - Existing unique index: public.bookings_external_id_key
+-- - Candidate duplicate:   public.idx_bookings_external_id
+-- ---------------------------------------------------------------------------
+-- DROP INDEX IF EXISTS public.idx_bookings_external_id;
+
+-- ---------------------------------------------------------------------------
+-- Candidate B: invitations.token duplicate index
+-- - Existing unique index: public.invitations_token_key
+-- - Candidate duplicate:   public.idx_invitations_token
+-- ---------------------------------------------------------------------------
+-- DROP INDEX IF EXISTS public.idx_invitations_token;
+
+-- ---------------------------------------------------------------------------
+-- Candidate C: subscriptions.stripe_subscription_id duplicate index
+-- - Existing unique index: public.subscriptions_stripe_subscription_id_key
+-- - Candidate duplicate:   public.idx_subscriptions_stripe_subscription_id
+-- ---------------------------------------------------------------------------
+-- DROP INDEX IF EXISTS public.idx_subscriptions_stripe_subscription_id;
+
+-- ---------------------------------------------------------------------------
+-- Candidate D (needs extra caution): services.slug overlap
+-- - Existing unique index: public.services_slug_key
+-- - Overlapping index:     public.idx_services_slug
+--
+-- Advisory:
+-- - pg_stat currently shows scans on idx_services_slug.
+-- - Validate which slug index the planner picks in your key queries before drop.
+-- ---------------------------------------------------------------------------
+-- DROP INDEX IF EXISTS public.idx_services_slug;
+
+-- ---------------------------------------------------------------------------
+-- Optional helper queries (run manually when reviewing)
+-- ---------------------------------------------------------------------------
+-- select tablename, indexname, indexdef
+-- from pg_indexes
+-- where schemaname = 'public'
+--   and indexname in (
+--     'idx_bookings_external_id',
+--     'bookings_external_id_key',
+--     'idx_invitations_token',
+--     'invitations_token_key',
+--     'idx_subscriptions_stripe_subscription_id',
+--     'subscriptions_stripe_subscription_id_key',
+--     'idx_services_slug',
+--     'services_slug_key'
+--   )
+-- order by tablename, indexname;
+
+-- select
+--   relname as table_name,
+--   indexrelname as index_name,
+--   idx_scan,
+--   idx_tup_read,
+--   idx_tup_fetch
+-- from pg_stat_user_indexes
+-- where schemaname = 'public'
+--   and indexrelname in (
+--     'idx_bookings_external_id',
+--     'bookings_external_id_key',
+--     'idx_invitations_token',
+--     'invitations_token_key',
+--     'idx_subscriptions_stripe_subscription_id',
+--     'subscriptions_stripe_subscription_id_key',
+--     'idx_services_slug',
+--     'services_slug_key'
+--   )
+-- order by relname, indexrelname;

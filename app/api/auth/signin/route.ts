@@ -1,8 +1,18 @@
 /**
  * Sign In API Route
+ *
+ * Uses the Supabase SSR pattern: a single `response` object owned by the
+ * `setAll` cookies callback is mutated as auth cookies are set. After a
+ * successful sign-in, the final JSON body is built and the auth cookies
+ * are copied from `response` onto it explicitly (name, value, options) so
+ * the browser persists them and subsequent requests are recognized as
+ * authenticated by the proxy middleware.
+ *
+ * Returns `{ success, user: { id, email }, role }` so the client can move
+ * into the redirect transition while preserving role context for callers.
  */
 
-import { signInSchema } from '@/lib/validation-schemas'
+import { signInSchema, type ProfileRole } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
@@ -10,7 +20,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validate input with Zod
     const validation = signInSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
@@ -53,7 +62,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Sign in user
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -66,6 +74,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let role: ProfileRole | null = null
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', data.user.id)
+      .single<{ role: ProfileRole }>()
+
+    if (!profileError && profile) {
+      role = profile.role
+    }
+
     const finalResponse = NextResponse.json(
       {
         success: true,
@@ -73,12 +92,14 @@ export async function POST(request: NextRequest) {
           id: data.user.id,
           email: data.user.email,
         },
+        role,
       },
       { status: 200 }
     )
 
     response.cookies.getAll().forEach((cookie) => {
-      finalResponse.cookies.set(cookie)
+      const { name, value, ...options } = cookie
+      finalResponse.cookies.set(name, value, options)
     })
 
     return finalResponse
@@ -90,4 +111,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

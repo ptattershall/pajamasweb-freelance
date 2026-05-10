@@ -5,7 +5,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { isSafeRedirect } from '@/lib/auth-routing'
+
+const buildDashboardRedirectUrl = (redirectTarget: string | null): string => {
+  const params = new URLSearchParams()
+  if (isSafeRedirect(redirectTarget)) {
+    params.set('redirect', redirectTarget)
+  }
+
+  const queryString = params.toString()
+  return queryString ? `/auth/redirect?${queryString}` : '/auth/redirect'
+}
 
 function SignInContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
+  const [authStatus, setAuthStatus] = useState('Signing In...')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [resendingVerification, setResendingVerification] = useState(false)
@@ -40,6 +51,7 @@ function SignInContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setAuthStatus('Checking your credentials...')
     setError(null)
 
     try {
@@ -49,16 +61,23 @@ function SignInContent() {
         body: JSON.stringify(formData),
       })
 
+      const data: { error?: string } = await response
+        .json()
+        .catch(() => ({}))
+
       if (!response.ok) {
-        const data = await response.json()
         throw new Error(data.error || 'Sign in failed')
       }
 
-      router.push('/portal')
+      const redirectParam = searchParams.get('redirect')
+      const target = buildDashboardRedirectUrl(redirectParam)
+
+      setAuthStatus('Preparing your workspace...')
+      window.location.assign(target)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
       setLoading(false)
+      setAuthStatus('Signing In...')
     }
   }
 
@@ -126,7 +145,7 @@ function SignInContent() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -138,6 +157,7 @@ function SignInContent() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   className="pl-10"
                   placeholder="you@example.com"
                 />
@@ -155,6 +175,7 @@ function SignInContent() {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   className="pl-10"
                   placeholder="••••••••"
                 />
@@ -162,7 +183,7 @@ function SignInContent() {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? authStatus : 'Sign In'}
             </Button>
           </form>
 

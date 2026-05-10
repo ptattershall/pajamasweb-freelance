@@ -1,64 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCsrfToken, hashCsrfToken } from '@/lib/csrf-protection'
 import { updateSession } from '@/utils/supabase/middleware'
+import { createServerClient } from '@supabase/ssr'
+import { defaultRouteForRole } from '@/lib/auth-routing'
+import type { ProfileRole } from '@/lib/validation-schemas'
 
-// Routes that require authentication
-const adminRoutes = ['/admin']
-const portalRoutes = ['/portal']
-const publicPortalRoutes = ['/portal/signin', '/portal/signup', '/portal/forgot-password', '/portal/reset-password', '/auth/signin', '/auth/signup', '/auth/forgot-password', '/auth/reset-password']
+const adminPrefix = '/admin'
+const portalPrefix = '/portal'
+const clientPrefix = '/client'
 
-export async function proxy(request: NextRequest) {
-  const { response, user } = await updateSession(request)
-  const pathname = request.nextUrl.pathname
+const publicAuthRoutes = [
+  '/auth/signin',
+  '/auth/signup',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/accept-invitation',
+  '/auth/callback',
+  '/portal/signin',
+  '/portal/signup',
+  '/portal/forgot-password',
+  '/portal/reset-password',
+  '/client/signin',
+]
 
-  // Check if the route is an admin route
-  const isAdminRoute = adminRoutes.some((route) =>
-    pathname.startsWith(route)
-  )
+const isPublicAuthRoute = (pathname: string): boolean =>
+  publicAuthRoutes.some((route) => pathname.startsWith(route))
 
-  // Check if the route is a portal route
-  const isPortalRoute = portalRoutes.some((route) =>
-    pathname.startsWith(route)
-  )
+const isAdminRoute = (pathname: string): boolean =>
+  pathname.startsWith(adminPrefix) && pathname !== '/admin/login'
 
-  // Check if the route is a public portal route
-  const isPublicPortalRoute = publicPortalRoutes.some((route) =>
-    pathname.startsWith(route)
-  )
+const isPortalRoute = (pathname: string): boolean =>
+  pathname.startsWith(portalPrefix) && !isPublicAuthRoute(pathname)
 
-  // Handle admin routes
-  if (isAdminRoute) {
-    if (pathname === '/admin/login') {
-      const csrfToken = generateCsrfToken()
-      const csrfHash = await hashCsrfToken(csrfToken)
-      response.cookies.set('csrf-token', csrfHash, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      })
-      response.headers.set('X-CSRF-Token', csrfToken)
-      return response
-    }
+const isClientRoute = (pathname: string): boolean =>
+  pathname.startsWith(clientPrefix) && !isPublicAuthRoute(pathname)
 
-    if (!user) {
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-  }
+const fetchRole = async (request: NextRequest): Promise<ProfileRole | null> => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Handle portal routes
-  if (isPortalRoute && !isPublicPortalRoute) {
-    if (!user) {
-      const signinUrl = new URL('/portal/signin', request.url)
-      signinUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(signinUrl)
-    }
-  }
+  if (!supabaseUrl || !supabaseKey) return null
 
-  // Generate CSRF token for all allowed responses.
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll() {
+        // Read-only role lookup; cookies already refreshed by updateSession.
+      },
+    },
+  })
+
+  const { data: userData } = await supabase.auth.getUser()
+  if (!userData.user) return null
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', userData.user.id)
+    .single<{ role: ProfileRole }>()
+
+  return profile?.role ?? null
+}
+
+const setCsrf = async (response: NextResponse): Promise<NextResponse> => {
   const csrfToken = generateCsrfToken()
   const csrfHash = await hashCsrfToken(csrfToken)
 
@@ -71,11 +79,56 @@ export async function proxy(request: NextRequest) {
   })
 
   response.headers.set('X-CSRF-Token', csrfToken)
-
   return response
 }
 
-export const config = {
-  matcher: ['/admin/:path*', '/portal/:path*'],
+export async function proxy(request: NextRequest) {
+  const { response, user } = await updateSession(request)
+  const pathname = request.nextUrl.pathname
+
+  if (pathname === '/admin/login') {
+    return setCsrf(response)
+  }
+
+  const needsAuth =
+    isAdminRoute(pathname) || isPortalRoute(pathname) || isClientRoute(pathname)
+
+  if (!needsAuth) {
+    return setCsrf(response)
+  }
+
+  if (!user) {
+    const signinUrl = new URL('/auth/signin', request.url)
+    signinUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(signinUrl)
+  }
+
+  const role = await fetchRole(request)
+
+  // Role-based gating
+  if (isAdminRoute(pathname) && role !== 'OWNER') {
+    return NextResponse.redirect(
+      new URL(defaultRouteForRole(role), request.url)
+    )
+  }
+
+  if (isPortalRoute(pathname)) {
+    if (role !== 'OWNER' && role !== 'SALES' && role !== 'DEV') {
+      return NextResponse.redirect(
+        new URL(defaultRouteForRole(role), request.url)
+      )
+    }
+  }
+
+  if (isClientRoute(pathname) && role !== 'CLIENT') {
+    return NextResponse.redirect(
+      new URL(defaultRouteForRole(role), request.url)
+    )
+  }
+
+  return setCsrf(response)
 }
 
+export const config = {
+  matcher: ['/admin/:path*', '/portal/:path*', '/client/:path*'],
+}
