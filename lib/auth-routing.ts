@@ -14,7 +14,9 @@ export const defaultRouteForRole = (role: ProfileRole | null): string => {
     case 'CLIENT':
       return '/client'
     default:
-      return '/client'
+      // Must not return a role-guarded path: null role + `/client` caused an
+      // infinite redirect in proxy.ts (CLIENT gate sends null role back to default).
+      return '/auth/redirect'
   }
 }
 
