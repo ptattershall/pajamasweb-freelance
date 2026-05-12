@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateCsrfToken, hashCsrfToken } from '@/lib/csrf-protection'
+import { getUserRole } from '@/lib/user-role'
 import { updateSession } from '@/utils/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 import { buildProtectedRedirectTarget, defaultRouteForRole } from '@/lib/auth-routing'
@@ -35,7 +36,10 @@ const isPortalRoute = (pathname: string): boolean =>
 const isClientRoute = (pathname: string): boolean =>
   pathname.startsWith(clientPrefix) && !isPublicAuthRoute(pathname)
 
-const fetchRole = async (request: NextRequest): Promise<ProfileRole | null> => {
+const fetchRole = async (
+  request: NextRequest,
+  userId: string
+): Promise<ProfileRole | null> => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
@@ -57,13 +61,8 @@ const fetchRole = async (request: NextRequest): Promise<ProfileRole | null> => {
   const { data: userData } = await supabase.auth.getUser()
   if (!userData.user) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('user_id', userData.user.id)
-    .single<{ role: ProfileRole }>()
-
-  return profile?.role ?? null
+  // Match the trusted role lookup used by authenticated API routes.
+  return getUserRole(userId)
 }
 
 const setCsrf = async (response: NextResponse): Promise<NextResponse> => {
@@ -106,7 +105,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(signinUrl)
   }
 
-  const role = await fetchRole(request)
+  const role = await fetchRole(request, user.id)
 
   // Role-based gating
   if (isAdminRoute(pathname) && role !== 'OWNER') {

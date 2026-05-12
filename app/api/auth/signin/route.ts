@@ -12,8 +12,9 @@
  * can navigate directly to the resolved post-sign-in destination.
  */
 
-import { routeAfterSignIn } from '@/lib/auth-routing'
-import { signInSchema, type ProfileRole } from '@/lib/validation-schemas'
+import { isSafeRedirect, routeAfterSignIn } from '@/lib/auth-routing'
+import { getUserRole } from '@/lib/user-role'
+import { signInSchema } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { z } from 'zod'
@@ -80,18 +81,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let role: ProfileRole | null = null
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', data.user.id)
-      .single<{ role: ProfileRole }>()
-
-    if (!profileError && profile) {
-      role = profile.role
-    }
-
-    const redirectTo = routeAfterSignIn(role, redirect ?? null)
+    const role = await getUserRole(data.user.id)
+    const redirectTarget = redirect ?? null
+    const baseRedirectTo = routeAfterSignIn(role, redirectTarget)
+    const redirectTo =
+      baseRedirectTo === '/auth/redirect' && isSafeRedirect(redirectTarget)
+        ? `/auth/redirect?${new URLSearchParams({ redirect: redirectTarget }).toString()}`
+        : baseRedirectTo
 
     const finalResponse = NextResponse.json(
       {
