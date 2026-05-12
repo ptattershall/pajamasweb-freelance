@@ -11,13 +11,13 @@ export default async function AdminLoginPage({
   searchParams,
 }: AdminLoginPageProps) {
   const params = await searchParams
-  const redirectTarget = isSafeRedirect(params.redirect ?? null)
-    ? params.redirect
+  const redirectParam = params.redirect ?? null
+  const redirectTarget = isSafeRedirect(redirectParam)
+    ? redirectParam
     : '/admin'
 
-  const nextParams = new URLSearchParams({
-    redirect: redirectTarget,
-  })
+  const nextParams = new URLSearchParams()
+  nextParams.set('redirect', redirectTarget)
 
   redirect(`/auth/signin?${nextParams.toString()}`)
 }

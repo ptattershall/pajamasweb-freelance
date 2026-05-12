@@ -14,14 +14,15 @@ interface SignInPageProps {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const params = await searchParams
+  const redirectTarget = params.redirect ?? null
   const nextParams = new URLSearchParams()
 
   if (params.message) {
     nextParams.set('message', params.message)
   }
 
-  if (isSafeRedirect(params.redirect ?? null)) {
-    nextParams.set('redirect', params.redirect)
+  if (isSafeRedirect(redirectTarget)) {
+    nextParams.set('redirect', redirectTarget)
   }
 
   const queryString = nextParams.toString()
