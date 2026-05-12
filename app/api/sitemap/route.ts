@@ -1,5 +1,5 @@
 import { getAllBlogPosts, getAllCaseStudies } from '@/lib/content'
-import { getServices } from '@/lib/supabase'
+import { getServices } from '@/lib/supabase-server'
 
 export const revalidate = 3600 // Revalidate every hour
 

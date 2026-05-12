@@ -1,4 +1,6 @@
 -- Image Metadata Schema for Phase 3
+-- Source of truth now lives in scripts/migrations/030_image_metadata_tables.sql.
+-- Keep this document in sync with the tracked migration when making changes.
 
 -- Create images table
 CREATE TABLE IF NOT EXISTS images (

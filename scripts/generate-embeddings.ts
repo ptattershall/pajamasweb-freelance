@@ -16,7 +16,7 @@ import { getAllBlogPosts, getAllCaseStudies } from '../lib/content'
 import {
   updateBlogPostEmbedding,
   updateCaseStudyEmbedding,
-} from '../lib/supabase'
+} from '../lib/supabase-server'
 import {
   generateEmbedding,
   prepareContentForEmbedding,

@@ -7,8 +7,8 @@ import fs from 'fs/promises'
 import path from 'path'
 import matter from 'gray-matter'
 import { BlogPostInput, BlogPostUpdateInput } from './validation-schemas'
-import { upsertBlogPostMeta, updateBlogPostEmbedding } from './supabase'
 import { generateEmbedding, prepareContentForEmbedding } from './embeddings'
+import { upsertBlogPostMeta, updateBlogPostEmbedding } from './supabase-server'
 
 const CONTENT_DIR = path.join(process.cwd(), 'content', 'blog')
 

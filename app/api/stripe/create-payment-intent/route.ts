@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPaymentIntent, getOrCreateStripeCustomer } from '@/lib/stripe'
-import { getServiceBySlug } from '@/lib/supabase'
+import { getServiceBySlug } from '@/lib/supabase-server'
 import { z } from 'zod'
 
 const createPaymentIntentSchema = z.object({

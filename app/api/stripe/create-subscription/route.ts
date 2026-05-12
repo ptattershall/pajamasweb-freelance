@@ -4,7 +4,7 @@ import {
   getOrCreateSubscriptionPrice,
   SubscriptionInterval,
 } from '@/lib/stripe'
-import { getServiceBySlug } from '@/lib/supabase'
+import { getServiceBySlug } from '@/lib/supabase-server'
 import { z } from 'zod'
 
 const createSubscriptionSchema = z.object({

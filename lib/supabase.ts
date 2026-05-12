@@ -59,21 +59,6 @@ export interface CaseStudyMeta {
   embedding?: number[]
 }
 
-// Blog posts metadata functions
-export async function upsertBlogPostMeta(post: BlogPostMeta) {
-  const { data, error } = await supabase
-    .from('blog_posts_meta')
-    .upsert(post as never, { onConflict: 'slug' })
-    .select()
-
-  if (error) {
-    console.error('Error upserting blog post metadata:', error)
-    throw error
-  }
-
-  return data
-}
-
 export async function getBlogPostsMeta() {
   const { data, error } = await supabase
     .from('blog_posts_meta')
@@ -112,21 +97,6 @@ export async function getBlogPostsByTag(tag: string) {
 
   if (error) {
     console.error('Error fetching blog posts by tag:', error)
-    throw error
-  }
-
-  return data
-}
-
-// Case studies metadata functions
-export async function upsertCaseStudyMeta(study: CaseStudyMeta) {
-  const { data, error } = await supabase
-    .from('case_studies_meta')
-    .upsert(study as never, { onConflict: 'slug' })
-    .select()
-
-  if (error) {
-    console.error('Error upserting case study metadata:', error)
     throw error
   }
 
@@ -443,38 +413,6 @@ export async function findSimilarCaseStudies(embedding: number[], limit: number 
   }
 
   return (data as CaseStudyMeta[]) || []
-}
-
-// Update blog post with embedding
-export async function updateBlogPostEmbedding(slug: string, embedding: number[]) {
-  const { data, error } = await supabase
-    .from('blog_posts_meta')
-    .update({ embedding } as never)
-    .eq('slug', slug)
-    .select()
-
-  if (error) {
-    console.error('Error updating blog post embedding:', error)
-    throw error
-  }
-
-  return data
-}
-
-// Update case study with embedding
-export async function updateCaseStudyEmbedding(slug: string, embedding: number[]) {
-  const { data, error } = await supabase
-    .from('case_studies_meta')
-    .update({ embedding } as never)
-    .eq('slug', slug)
-    .select()
-
-  if (error) {
-    console.error('Error updating case study embedding:', error)
-    throw error
-  }
-
-  return data
 }
 
 // Services and Payments Types

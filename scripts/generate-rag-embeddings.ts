@@ -14,7 +14,7 @@ import fs from 'fs'
 import path from 'path'
 import { generateEmbedding, prepareContentForEmbedding } from '../lib/embeddings'
 import { batchStoreEmbeddings, clearEmbeddingsByType } from '../lib/rag-service'
-import { getServices } from '../lib/supabase'
+import { getServices } from '../lib/supabase-server'
 import { getAllBlogPosts, getAllCaseStudies } from '../lib/content'
 
 const BATCH_SIZE = 10

@@ -1,5 +1,7 @@
 -- Content Management Metadata Tables
--- Run this SQL in your Supabase SQL Editor to create the necessary tables
+-- Source of truth now lives in scripts/migrations/029_content_metadata_tables.sql.
+-- Keep this document in sync with the tracked migration when making changes.
+-- Run this SQL in your Supabase SQL Editor only when you need a manual reference.
 
 -- Create blog_posts_meta table
 CREATE TABLE IF NOT EXISTS public.blog_posts_meta (

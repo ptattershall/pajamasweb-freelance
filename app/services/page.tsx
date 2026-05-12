@@ -1,4 +1,5 @@
-import { getServices, Service } from '@/lib/supabase'
+import type { Service } from '@/lib/supabase'
+import { getServices } from '@/lib/supabase-server'
 import { Metadata } from 'next'
 import { JsonLdScript } from '@/components/JsonLdScript'
 import { generateBreadcrumbSchema } from '@/lib/json-ld-schemas'

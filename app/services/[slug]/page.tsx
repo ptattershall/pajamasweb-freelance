@@ -1,4 +1,4 @@
-import { getServiceBySlug, getServices } from '@/lib/supabase'
+import { getServiceBySlug, getServices } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import ServiceCheckoutButtons from '@/components/ServiceCheckoutButtons'

@@ -2,7 +2,7 @@
 
 import Stripe from 'stripe'
 import { redirect } from 'next/navigation'
-import { getServiceBySlug } from '@/lib/supabase'
+import { getServiceBySlug } from '@/lib/supabase-server'
 import {
   getOrCreateSubscriptionPrice,
   createSubscriptionCheckoutSession,
