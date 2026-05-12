@@ -1,108 +1,24 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { isSafeRedirect } from '@/lib/auth-routing'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { createClient } from '@/utils/supabase/client'
-
-function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/admin'
-
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const supabase = createClient()
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError || !data.session) {
-        throw new Error(signInError?.message || 'Login failed')
-      }
-
-      router.push(redirect)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Admin Login</CardTitle>
-          <CardDescription>Sign in to access the content management system</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-
-            <p className="text-xs text-muted-foreground text-center">
-              Contact your administrator for login credentials
-            </p>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  )
+interface AdminLoginPageProps {
+  searchParams: Promise<{
+    redirect?: string
+  }>
 }
 
-export default function AdminLoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <LoginForm />
-    </Suspense>
-  )
+export default async function AdminLoginPage({
+  searchParams,
+}: AdminLoginPageProps) {
+  const params = await searchParams
+  const redirectTarget = isSafeRedirect(params.redirect ?? null)
+    ? params.redirect
+    : '/admin'
+
+  const nextParams = new URLSearchParams({
+    redirect: redirectTarget,
+  })
+
+  redirect(`/auth/signin?${nextParams.toString()}`)
 }
 

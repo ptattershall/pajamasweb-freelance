@@ -9,8 +9,15 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { createServerClient } from '@supabase/ssr'
+import { routeAfterSignIn } from '@/lib/auth-routing'
 import { acceptInvitation } from '@/lib/auth-service'
-import { createServerSupabaseClient } from '@/lib/auth-service'
+import type { ProfileRole } from '@/lib/validation-schemas'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 const acceptInvitationSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -21,6 +28,13 @@ const acceptInvitationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (!supabaseUrl || !supabasePublishableKey) {
+      return NextResponse.json(
+        { error: 'Missing Supabase environment configuration' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
 
     // Validate input
@@ -41,38 +55,71 @@ export async function POST(request: NextRequest) {
       throw new Error('Failed to accept invitation')
     }
 
-    // Create session for the new user
-    const supabase = createServerSupabaseClient()
-    const { data: { session }, error: sessionError } = await supabase.auth.signInWithPassword({
+    // Sign the new user in with the same SSR cookie strategy as the shared
+    // signin flow so the browser lands with a valid Supabase session.
+    let response = NextResponse.json({ success: true }, { status: 201 })
+    const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+
+          response = NextResponse.json({ success: true }, { status: 201 })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    })
+
+    const {
+      data: { session, user },
+      error: sessionError,
+    } = await supabase.auth.signInWithPassword({
       email: result.user.email!,
       password,
     })
 
-    if (sessionError || !session) {
+    if (sessionError || !session || !user) {
       throw new Error('Failed to create session')
     }
 
-    // Create response with auth cookie
-    const response = NextResponse.json(
+    let role: ProfileRole | null = null
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single<{ role: ProfileRole }>()
+
+    if (!profileError && profile) {
+      role = profile.role
+    }
+
+    const redirectTo = routeAfterSignIn(role, null)
+
+    const finalResponse = NextResponse.json(
       {
         success: true,
         user: {
-          id: result.user.id,
-          email: result.user.email,
+          id: user.id,
+          email: user.email,
         },
+        role,
+        redirectTo,
       },
       { status: 201 }
     )
 
-    // Set auth token cookie
-    response.cookies.set('auth-token', session.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+    response.cookies.getAll().forEach((cookie) => {
+      const { name, value, ...options } = cookie
+      finalResponse.cookies.set(name, value, options)
     })
 
-    return response
+    return finalResponse
   } catch (error) {
     console.error('Accept invitation error:', error)
     return NextResponse.json(

@@ -15,16 +15,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { isSafeRedirect } from '@/lib/auth-routing'
 
-const buildDashboardRedirectUrl = (redirectTarget: string | null): string => {
-  const params = new URLSearchParams()
-  if (isSafeRedirect(redirectTarget)) {
-    params.set('redirect', redirectTarget)
-  }
-
-  const queryString = params.toString()
-  return queryString ? `/auth/redirect?${queryString}` : '/auth/redirect'
-}
-
 function SignInContent() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(false)
@@ -37,6 +27,7 @@ function SignInContent() {
     email: '',
     password: '',
   })
+  const redirectTarget = searchParams.get('redirect')
 
   useEffect(() => {
     const msg = searchParams.get('message')
@@ -58,10 +49,13 @@ function SignInContent() {
       const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          redirect: isSafeRedirect(redirectTarget) ? redirectTarget : undefined,
+        }),
       })
 
-      const data: { error?: string } = await response
+      const data: { error?: string; redirectTo?: string } = await response
         .json()
         .catch(() => ({}))
 
@@ -69,11 +63,12 @@ function SignInContent() {
         throw new Error(data.error || 'Sign in failed')
       }
 
-      const redirectParam = searchParams.get('redirect')
-      const target = buildDashboardRedirectUrl(redirectParam)
+      if (!data.redirectTo || !isSafeRedirect(data.redirectTo)) {
+        throw new Error('We could not determine where to send you after sign in.')
+      }
 
       setAuthStatus('Preparing your workspace...')
-      window.location.assign(target)
+      window.location.assign(data.redirectTo)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setLoading(false)

@@ -1,18 +1,16 @@
-/**
- * Redirect to new auth signin page
- */
-
 import { redirect } from 'next/navigation'
 import { isSafeRedirect } from '@/lib/auth-routing'
 
-interface SignInPageProps {
+interface ClientSignInRedirectPageProps {
   searchParams: Promise<{
     message?: string
     redirect?: string
   }>
 }
 
-export default async function SignInPage({ searchParams }: SignInPageProps) {
+export default async function ClientSignInRedirectPage({
+  searchParams,
+}: ClientSignInRedirectPageProps) {
   const params = await searchParams
   const nextParams = new URLSearchParams()
 

@@ -8,19 +8,25 @@
  * the browser persists them and subsequent requests are recognized as
  * authenticated by the proxy middleware.
  *
- * Returns `{ success, user: { id, email }, role }` so the client can move
- * into the redirect transition while preserving role context for callers.
+ * Returns `{ success, user: { id, email }, role, redirectTo }` so the client
+ * can navigate directly to the resolved post-sign-in destination.
  */
 
+import { routeAfterSignIn } from '@/lib/auth-routing'
 import { signInSchema, type ProfileRole } from '@/lib/validation-schemas'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { z } from 'zod'
+
+const signInRequestSchema = signInSchema.extend({
+  redirect: z.string().optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const validation = signInSchema.safeParse(body)
+    const validation = signInRequestSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
         { error: 'Validation failed', details: validation.error.flatten() },
@@ -28,7 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password } = validation.data
+    const { email, password, redirect } = validation.data
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabasePublishableKey =
@@ -85,6 +91,8 @@ export async function POST(request: NextRequest) {
       role = profile.role
     }
 
+    const redirectTo = routeAfterSignIn(role, redirect ?? null)
+
     const finalResponse = NextResponse.json(
       {
         success: true,
@@ -93,6 +101,7 @@ export async function POST(request: NextRequest) {
           email: data.user.email,
         },
         role,
+        redirectTo,
       },
       { status: 200 }
     )

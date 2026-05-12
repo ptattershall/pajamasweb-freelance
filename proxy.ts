@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateCsrfToken, hashCsrfToken } from '@/lib/csrf-protection'
 import { updateSession } from '@/utils/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
-import { defaultRouteForRole } from '@/lib/auth-routing'
+import { buildProtectedRedirectTarget, defaultRouteForRole } from '@/lib/auth-routing'
 import type { ProfileRole } from '@/lib/validation-schemas'
 
 const adminPrefix = '/admin'
@@ -99,7 +99,10 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     const signinUrl = new URL('/auth/signin', request.url)
-    signinUrl.searchParams.set('redirect', pathname)
+    signinUrl.searchParams.set(
+      'redirect',
+      buildProtectedRedirectTarget(pathname, request.nextUrl.search)
+    )
     return NextResponse.redirect(signinUrl)
   }
 

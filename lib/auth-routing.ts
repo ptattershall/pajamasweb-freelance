@@ -25,6 +25,21 @@ export const isSafeRedirect = (target: string | null): target is string => {
   return target.startsWith('/') && !target.startsWith('//')
 }
 
+export const buildProtectedRedirectTarget = (
+  pathname: string,
+  search: string = ''
+): string => {
+  if (!pathname.startsWith('/')) {
+    return '/'
+  }
+
+  if (!search || search === '?') {
+    return pathname
+  }
+
+  return `${pathname}${search.startsWith('?') ? search : `?${search}`}`
+}
+
 export const canRoleAccessPath = (
   role: ProfileRole | null,
   pathname: string

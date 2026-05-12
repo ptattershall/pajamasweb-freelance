@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, User, Building2, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,9 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { isSafeRedirect } from '@/lib/auth-routing'
 
 export default function AcceptInvitationForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
@@ -48,7 +48,7 @@ export default function AcceptInvitationForm() {
 
         setInvitationEmail(data.email)
         setValidating(false)
-      } catch (err) {
+      } catch {
         setError('Failed to validate invitation')
         setValidating(false)
       }
@@ -79,17 +79,23 @@ export default function AcceptInvitationForm() {
         }),
       })
 
-      const data = await response.json()
+      const data: { error?: string; redirectTo?: string } = await response
+        .json()
+        .catch(() => ({}))
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to accept invitation')
       }
 
+      const redirectTo =
+        data.redirectTo && isSafeRedirect(data.redirectTo)
+          ? data.redirectTo
+          : '/auth/redirect'
+
       setSuccess(true)
-      // Redirect to signin after 2 seconds
       setTimeout(() => {
-        router.push('/auth/signin?message=Account created successfully. Please sign in.')
-      }, 2000)
+        window.location.assign(redirectTo)
+      }, 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -121,7 +127,7 @@ export default function AcceptInvitationForm() {
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Account Created!</h2>
               <p className="text-muted-foreground mb-4">
-                Your account has been successfully created. Redirecting to sign in...
+                Your account has been successfully created. Redirecting to your workspace...
               </p>
             </div>
           </CardContent>
