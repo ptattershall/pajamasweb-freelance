@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { BlogPostMeta, CaseStudyMeta, Service } from './supabase'
 
 type MetadataTableName = 'blog_posts_meta' | 'case_studies_meta'
+type SupabaseKeyKind = 'legacy_jwt' | 'secret' | 'publishable' | 'unknown'
 
 type ErrorLike = {
   code?: unknown
@@ -24,6 +25,18 @@ export interface SerializedSupabaseError {
   details?: string | null
   hint?: string | null
   raw?: string
+}
+
+export interface SupabaseKeyDiagnostics {
+  kind: SupabaseKeyKind
+  projectRef?: string
+}
+
+export interface SupabaseEnvironmentDiagnostics {
+  urlProjectRef?: string
+  serviceRoleKey: SupabaseKeyDiagnostics
+  clientKey: SupabaseKeyDiagnostics
+  warnings: string[]
 }
 
 export class MetadataSyncError extends Error {
@@ -52,6 +65,151 @@ export class MetadataSyncError extends Error {
 
 let serverSupabaseClient: ReturnType<typeof createServerSupabaseClient> | null = null
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+
+  if (parts.length !== 3) {
+    return null
+  }
+
+  try {
+    const payload = Buffer.from(parts[1], 'base64url').toString('utf8')
+    return JSON.parse(payload) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+export function getSupabaseProjectRefFromUrl(supabaseUrl: string | undefined): string | undefined {
+  if (!supabaseUrl) {
+    return undefined
+  }
+
+  try {
+    const hostname = new URL(supabaseUrl).hostname
+    const projectRef = hostname.split('.')[0]
+
+    return projectRef || undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function inspectSupabaseKey(key: string | undefined): SupabaseKeyDiagnostics {
+  const normalizedKey = key?.trim()
+
+  if (!normalizedKey) {
+    return { kind: 'unknown' }
+  }
+
+  if (normalizedKey.startsWith('sb_secret_')) {
+    return { kind: 'secret' }
+  }
+
+  if (normalizedKey.startsWith('sb_publishable_')) {
+    return { kind: 'publishable' }
+  }
+
+  if (normalizedKey.startsWith('eyJ')) {
+    const payload = decodeJwtPayload(normalizedKey)
+    const projectRef = typeof payload?.ref === 'string' ? payload.ref : undefined
+
+    return {
+      kind: 'legacy_jwt',
+      projectRef,
+    }
+  }
+
+  return { kind: 'unknown' }
+}
+
+export function getSupabaseEnvironmentDiagnostics(options?: {
+  supabaseUrl?: string
+  serviceRoleKey?: string
+  publishableKey?: string
+}): SupabaseEnvironmentDiagnostics {
+  const supabaseUrl = options?.supabaseUrl ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = options?.serviceRoleKey ?? process.env.SUPABASE_SERVICE_ROLE_KEY
+  const publishableKey =
+    options?.publishableKey ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  const urlProjectRef = getSupabaseProjectRefFromUrl(supabaseUrl)
+  const serviceRoleKeyDiagnostics = inspectSupabaseKey(serviceRoleKey)
+  const clientKeyDiagnostics = inspectSupabaseKey(publishableKey)
+  const warnings: string[] = []
+
+  if (
+    urlProjectRef &&
+    serviceRoleKeyDiagnostics.projectRef &&
+    serviceRoleKeyDiagnostics.projectRef !== urlProjectRef
+  ) {
+    warnings.push(
+      `NEXT_PUBLIC_SUPABASE_URL points to project ${urlProjectRef}, but SUPABASE_SERVICE_ROLE_KEY is a legacy JWT for project ${serviceRoleKeyDiagnostics.projectRef}.`
+    )
+  }
+
+  if (urlProjectRef && clientKeyDiagnostics.projectRef && clientKeyDiagnostics.projectRef !== urlProjectRef) {
+    warnings.push(
+      `NEXT_PUBLIC_SUPABASE_URL points to project ${urlProjectRef}, but the public Supabase key is a legacy JWT for project ${clientKeyDiagnostics.projectRef}.`
+    )
+  }
+
+  return {
+    urlProjectRef,
+    serviceRoleKey: serviceRoleKeyDiagnostics,
+    clientKey: clientKeyDiagnostics,
+    warnings,
+  }
+}
+
+export function formatSupabaseEnvironmentDiagnostics(
+  diagnostics: SupabaseEnvironmentDiagnostics
+): Record<string, string[] | string | null> {
+  return {
+    urlProjectRef: diagnostics.urlProjectRef ?? null,
+    serviceRoleKeyKind: diagnostics.serviceRoleKey.kind,
+    serviceRoleKeyProjectRef: diagnostics.serviceRoleKey.projectRef ?? null,
+    clientKeyKind: diagnostics.clientKey.kind,
+    clientKeyProjectRef: diagnostics.clientKey.projectRef ?? null,
+    warnings: diagnostics.warnings,
+  }
+}
+
+function getServerSupabaseConfigurationError(): string | null {
+  const diagnostics = getSupabaseEnvironmentDiagnostics()
+  const mismatch = diagnostics.warnings.find((warning) =>
+    warning.includes('SUPABASE_SERVICE_ROLE_KEY')
+  )
+
+  if (!mismatch) {
+    return null
+  }
+
+  return `${mismatch} Update the server key so it belongs to the same Supabase project as NEXT_PUBLIC_SUPABASE_URL.`
+}
+
+function getClientSupabaseConfigurationError(): string | null {
+  const diagnostics = getSupabaseEnvironmentDiagnostics()
+  const mismatch = diagnostics.warnings.find((warning) =>
+    warning.includes('public Supabase key')
+  )
+
+  if (!mismatch) {
+    return null
+  }
+
+  return `${mismatch} Update NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY so it belongs to the same Supabase project as NEXT_PUBLIC_SUPABASE_URL.`
+}
+
+function logSupabaseReadWarning(operation: string, error: unknown) {
+  console.warn(`Warning: ${operation}:`, {
+    error: serializeSupabaseError(error),
+    supabase: formatSupabaseEnvironmentDiagnostics(getSupabaseEnvironmentDiagnostics()),
+  })
+}
+
 /**
  * Create a Supabase client for server-side operations
  * Uses the service role key for elevated permissions
@@ -64,6 +222,12 @@ export function createServerSupabaseClient() {
     throw new Error(
       'Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY'
     )
+  }
+
+  const configurationError = getServerSupabaseConfigurationError()
+
+  if (configurationError) {
+    throw new Error(`Supabase configuration mismatch: ${configurationError}`)
   }
 
   return createClient(supabaseUrl, serviceRoleKey, {
@@ -97,6 +261,12 @@ export function createClientSupabaseClient() {
     throw new Error(
       'Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY for compatibility)'
     )
+  }
+
+  const configurationError = getClientSupabaseConfigurationError()
+
+  if (configurationError) {
+    throw new Error(`Supabase configuration mismatch: ${configurationError}`)
   }
 
   return createClient(supabaseUrl, publishableKey)
@@ -236,7 +406,7 @@ export async function getServices(activeOnly: boolean = true): Promise<Service[]
 
     return (data as Service[]) || []
   } catch (error) {
-    console.warn('Warning: Error fetching services:', error)
+    logSupabaseReadWarning('Error fetching services', error)
     return []
   }
 }
@@ -259,7 +429,7 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
 
     return data as Service | null
   } catch (error) {
-    console.warn('Warning: Error fetching service:', error)
+    logSupabaseReadWarning(`Error fetching service for slug "${slug}"`, error)
     return null
   }
 }

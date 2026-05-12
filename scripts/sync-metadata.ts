@@ -19,6 +19,8 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') })
 import { getAllBlogPosts, getAllCaseStudies } from '../lib/content'
 import {
   assertMetadataTablesAvailable,
+  formatSupabaseEnvironmentDiagnostics,
+  getSupabaseEnvironmentDiagnostics,
   MetadataSyncError,
   serializeSupabaseError,
   upsertBlogPostMeta,
@@ -29,6 +31,24 @@ import type { BlogPostMeta, CaseStudyMeta } from '../lib/supabase'
 type SyncResult = {
   syncedCount: number
   errors: string[]
+}
+
+function isTruthyEnvironmentValue(value: string | undefined): boolean {
+  if (!value) {
+    return false
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase())
+}
+
+function shouldFailOnSyncError(): boolean {
+  const strictOverride = process.env.METADATA_SYNC_STRICT ?? process.env.STRICT_METADATA_SYNC
+
+  if (typeof strictOverride === 'string') {
+    return isTruthyEnvironmentValue(strictOverride)
+  }
+
+  return !isTruthyEnvironmentValue(process.env.CI) && !isTruthyEnvironmentValue(process.env.VERCEL)
 }
 
 function checkEnvironmentVariables(): boolean {
@@ -44,6 +64,28 @@ function checkEnvironmentVariables(): boolean {
   }
 
   return true
+}
+
+function logSupabaseConfigurationHints(error: unknown) {
+  const diagnostics = getSupabaseEnvironmentDiagnostics()
+
+  if (diagnostics.warnings.length > 0) {
+    console.error('   Supabase configuration issues detected:')
+    diagnostics.warnings.forEach((warning) => {
+      console.error(`   - ${warning}`)
+    })
+  }
+
+  console.error(
+    '   Supabase configuration snapshot:',
+    formatSupabaseEnvironmentDiagnostics(diagnostics)
+  )
+
+  if (error instanceof MetadataSyncError) {
+    console.error(
+      '   Metadata tables hint: confirm scripts/migrations/029_content_metadata_tables.sql has been applied to the Supabase project referenced by NEXT_PUBLIC_SUPABASE_URL.'
+    )
+  }
 }
 
 function logSyncError(
@@ -173,6 +215,13 @@ async function syncCaseStudies(): Promise<SyncResult> {
 async function syncMetadata() {
   console.log('🔄 MDX Metadata Sync')
   console.log('='.repeat(40))
+  const shouldFailBuild = shouldFailOnSyncError()
+
+  console.log(
+    `Mode: ${shouldFailBuild ? 'strict' : 'best-effort'}${
+      shouldFailBuild ? '' : ' (non-blocking for CI/Vercel builds)'
+    }`
+  )
 
   if (!checkEnvironmentVariables()) {
     console.log('\n⏭️  Sync skipped (no Supabase credentials)')
@@ -216,8 +265,16 @@ async function syncMetadata() {
       console.error(`   raw: ${normalized.raw}`)
     }
 
-    console.error('   Metadata sync stopped before build to avoid silently stale content metadata.')
-    process.exit(1)
+    logSupabaseConfigurationHints(error)
+
+    if (shouldFailBuild) {
+      console.error('   Metadata sync stopped before build to avoid silently stale content metadata.')
+      process.exit(1)
+    }
+
+    console.warn('   Continuing build because metadata sync is running in best-effort mode.')
+    console.warn('   Set METADATA_SYNC_STRICT=true to make sync errors fail the build again.')
+    process.exit(0)
   }
 }
 
